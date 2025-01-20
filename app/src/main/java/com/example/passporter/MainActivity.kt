@@ -14,12 +14,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.passporter.presentation.feature.map.MapScreen
 import com.example.passporter.presentation.theme.PassPorterTheme
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.maps.MapsInitializer
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val availability = GoogleApiAvailability.getInstance()
+        val resultCode = availability.isGooglePlayServicesAvailable(this)
+        if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
+            availability.getErrorDialog(this, resultCode, 9000)?.show()
+            return
+        }
+
+        MapsInitializer.initialize(this, MapsInitializer.Renderer.LATEST) { }
 
         enableEdgeToEdge()
         setContent {

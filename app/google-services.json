@@ -12,7 +12,12 @@
           "package_name": "com.example.passporter"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "442066079163-hdsar4n6jtagchnik7nhar2gf5vku518.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDmVNaoYJFMix4MN8Fi7yUK2tFuigdAvcU"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "442066079163-hdsar4n6jtagchnik7nhar2gf5vku518.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
