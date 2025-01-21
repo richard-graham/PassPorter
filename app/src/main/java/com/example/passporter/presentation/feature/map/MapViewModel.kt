@@ -3,8 +3,6 @@ package com.example.passporter.presentation.feature.map
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.passporter.domain.entity.BorderPoint
-import com.example.passporter.domain.location.LocationException
-import com.example.passporter.domain.location.LocationManager
 import com.example.passporter.domain.location.LocationManagerImpl
 import com.example.passporter.domain.usecase.border.AddBorderPointUseCase
 import com.example.passporter.domain.usecase.border.GetBorderPointsUseCase
@@ -31,6 +29,9 @@ class MapViewModel @Inject constructor(
     private val _state = MutableStateFlow<MapScreenState>(MapScreenState.Loading)
     val state: StateFlow<MapScreenState> = _state.asStateFlow()
 
+    private val borderPointsFlow = MutableStateFlow<List<BorderPoint>>(emptyList())
+    private val locationFlow = MutableStateFlow<LatLng?>(null)
+
     init {
         loadData()
     }
@@ -43,25 +44,41 @@ class MapViewModel @Inject constructor(
                     return@launch
                 }
 
-                // Combine border points and location updates
-                combine(
-                    getBorderPointsUseCase(),
-                    locationManager.getLocationUpdates().map { result ->
-                        result.lastLocation?.let { LatLng(it.latitude, it.longitude) }
+                // Launch border points loading
+                launch {
+                    getBorderPointsUseCase().collect { result ->
+                        when (result) {
+                            is ResultUtil.Success -> borderPointsFlow.value = result.data
+                            is ResultUtil.Error -> _state.value = MapScreenState.Error(
+                                result.exception.message ?: "Failed to load border points"
+                            )
+                        }
                     }
-                ) { borderPointsResult, location ->
-                    when (borderPointsResult) {
-                        is ResultUtil.Success -> MapScreenState.Success(
-                            borderPoints = borderPointsResult.data,
+                }
+
+                // Launch location loading in parallel
+                launch {
+                    locationManager.getLocationUpdates().collect { result ->
+                        locationFlow.value = result.lastLocation?.let {
+                            LatLng(it.latitude, it.longitude)
+                        }
+                    }
+                }
+
+                // Combine results but emit success state as soon as we have border points
+                combine(borderPointsFlow, locationFlow) { points, location ->
+                    if (points.isNotEmpty()) {
+                        MapScreenState.Success(
+                            borderPoints = points,
                             userLocation = location
                         )
-                        is ResultUtil.Error -> MapScreenState.Error(
-                            borderPointsResult.exception.message ?: "Failed to load border points"
-                        )
+                    } else {
+                        _state.value
                     }
-                }.collect { state ->
-                    _state.value = state
+                }.collect { newState ->
+                    _state.value = newState
                 }
+
             } catch (e: SecurityException) {
                 _state.value = MapScreenState.LocationPermissionRequired
             } catch (e: Exception) {

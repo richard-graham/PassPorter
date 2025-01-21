@@ -11,9 +11,14 @@ import com.example.passporter.domain.repository.BorderRepository
 import com.example.passporter.presentation.util.ResultUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -25,17 +30,29 @@ class BorderRepositoryImpl @Inject constructor(
     private val dispatcherProvider: DispatcherProvider
 ) : BorderRepository {
 
-    override fun getBorderPoints(): Flow<List<BorderPoint>> =
-        firestoreService.getBorderPoints()
-            .map { dtos -> dtos.map(borderPointMapper::toDomain) }
-            .onEach { borderPoints ->
-                withContext(dispatcherProvider.io) {
-                    borderPoints.forEach {
-                        borderDao.insertBorderPoint(borderPointMapper.toEntity(it))
-                    }
-                }
+    override fun getBorderPoints(): Flow<List<BorderPoint>> = channelFlow {
+        // Launch database query immediately
+        launch(dispatcherProvider.io) {
+            val localData = borderDao.getBorderPoints().first()
+            if (localData.isNotEmpty()) {
+                send(localData.map(borderPointMapper::toDomain))
             }
-            .flowOn(dispatcherProvider.io)
+        }
+
+        // If database was empty, fetch from network
+        if (borderDao.getBorderPoints().first().isEmpty()) {
+            firestoreService.getBorderPoints()
+                .map { dtos -> dtos.map(borderPointMapper::toDomain) }
+                .collect { borderPoints ->
+                    withContext(dispatcherProvider.io) {
+                        borderPoints.forEach {
+                            borderDao.insertBorderPoint(borderPointMapper.toEntity(it))
+                        }
+                    }
+                    send(borderPoints)
+                }
+        }
+    }.flowOn(dispatcherProvider.io)
 
     override suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> =
         withContext(dispatcherProvider.io) {
