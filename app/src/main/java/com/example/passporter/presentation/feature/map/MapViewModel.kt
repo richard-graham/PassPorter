@@ -71,6 +71,7 @@ class MapViewModel @Inject constructor(
     }
 
     fun onPermissionGranted() {
+        _state.value = MapScreenState.Loading
         loadData()
     }
 

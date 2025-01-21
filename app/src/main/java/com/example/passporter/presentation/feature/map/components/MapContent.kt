@@ -8,6 +8,7 @@ import com.example.passporter.domain.entity.BorderPoint
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -28,16 +29,11 @@ fun MapContent(
                     userLocation ?: LatLng(0.0, 0.0),
                     if (userLocation != null) 10f else 2f
                 )
-            }
+            },
+            uiSettings = MapUiSettings(
+                myLocationButtonEnabled = userLocation != null
+            )
         ) {
-            // User location marker
-            userLocation?.let {
-                Marker(
-                    state = MarkerState(position = it),
-                    title = "Your Location"
-                )
-            }
-
             // Border point markers
             borderPoints.forEach { borderPoint ->
                 Marker(
