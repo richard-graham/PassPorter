@@ -20,6 +20,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf(
+                    "room.schemaLocation" to "$projectDir/schemas",
+                    "room.incremental" to "true",
+                    "room.expandProjection" to "true"
+                )
+            }
+        }
     }
 
     buildTypes {
@@ -83,7 +93,6 @@ dependencies {
     implementation(libs.google.firebase.firestore.ktx)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.messaging.ktx)
-    implementation(libs.com.google.firebase.firebase.firestore.ktx)
     implementation("com.google.android.gms:play-services-base:18.5.0")
 
     // permissions
@@ -94,7 +103,6 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.maps.compose)
     implementation(libs.hilt.android)
-    implementation(libs.firebase.firestore.ktx)
     implementation(libs.play.services.location)
     kapt(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines.android)

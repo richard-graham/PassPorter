@@ -16,7 +16,11 @@ class AddBorderPointUseCase @Inject constructor(
         longitude: Double,
         countryA: String,
         countryB: String,
-        description: String
+        description: String,
+        borderType: String?,
+        crossingType: String?,
+        sourceId: String,
+        dataSource: String
     ): ResultUtil<Unit> {
         val borderPoint = BorderPoint(
             id = UUID.randomUUID().toString(),
@@ -28,7 +32,11 @@ class AddBorderPointUseCase @Inject constructor(
             status = BorderStatus.OPEN,
             lastUpdate = System.currentTimeMillis(),
             createdBy = "current_user_id", // Inject user service for this
-            description = description
+            description = description,
+            borderType = borderType,
+            crossingType = crossingType,
+            sourceId = sourceId,
+            dataSource = dataSource
         )
         return borderRepository.addBorderPoint(borderPoint)
     }

@@ -15,5 +15,9 @@ data class BorderPointEntity(
     val status: String,
     val lastUpdate: Long,
     val createdBy: String,
-    val description: String
+    val description: String,
+    val borderType: String?,
+    val crossingType: String?,
+    val sourceId: String,
+    val dataSource: String
 )

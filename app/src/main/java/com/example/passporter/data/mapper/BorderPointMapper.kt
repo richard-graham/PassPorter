@@ -32,7 +32,11 @@ class BorderPointMapper @Inject constructor() {
             status = BorderStatus.valueOf(dto.status),
             lastUpdate = dto.lastUpdate,
             createdBy = dto.createdBy,
-            description = dto.description
+            description = dto.description,
+            borderType = dto.borderType,
+            crossingType = dto.crossingType,
+            sourceId = dto.sourceId,
+            dataSource = dto.dataSource
         )
 
     fun toEntity(domain: BorderPoint): BorderPointEntity =
@@ -46,7 +50,11 @@ class BorderPointMapper @Inject constructor() {
             status = domain.status.name,
             lastUpdate = domain.lastUpdate,
             createdBy = domain.createdBy,
-            description = domain.description
+            description = domain.description,
+            borderType = domain.borderType,
+            crossingType = domain.crossingType,
+            sourceId = domain.sourceId,
+            dataSource = domain.dataSource
         )
 
     fun toDomain(entity: BorderPointEntity): BorderPoint =
@@ -60,6 +68,10 @@ class BorderPointMapper @Inject constructor() {
             status = BorderStatus.valueOf(entity.status),
             lastUpdate = entity.lastUpdate,
             createdBy = entity.createdBy,
-            description = entity.description
+            description = entity.description,
+            borderType = entity.borderType,
+            crossingType = entity.crossingType,
+            sourceId = entity.sourceId,
+            dataSource = entity.dataSource
         )
 }

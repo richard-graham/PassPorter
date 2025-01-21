@@ -128,7 +128,11 @@ class MapViewModel @Inject constructor(
         location: LatLng,
         countryA: String,
         countryB: String,
-        description: String
+        description: String,
+        borderType: String?,
+        crossingType: String?,
+        sourceId: String,
+        dataSource: String
     ) {
         viewModelScope.launch {
             val result = addBorderPointUseCase(
@@ -137,7 +141,11 @@ class MapViewModel @Inject constructor(
                 longitude = location.longitude,
                 countryA = countryA,
                 countryB = countryB,
-                description = description
+                description = description,
+                borderType = borderType,
+                crossingType = crossingType,
+                sourceId = sourceId,
+                dataSource = dataSource
             )
             when (result) {
                 is ResultUtil.Success -> getBorderPoints()

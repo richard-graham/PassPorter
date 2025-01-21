@@ -10,5 +10,9 @@ data class BorderPointDto(
     val status: String = "",
     val lastUpdate: Long = 0L,
     val createdBy: String = "",
-    val description: String = ""
+    val description: String = "",
+    val borderType: String? = null,
+    val crossingType: String? = null,
+    val sourceId: String = "",
+    val dataSource: String = ""
 )
