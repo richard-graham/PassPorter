@@ -93,7 +93,7 @@ dependencies {
     implementation(libs.google.firebase.firestore.ktx)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.messaging.ktx)
-    implementation("com.google.android.gms:play-services-base:18.5.0")
+    implementation(libs.play.services.base)
 
     // permissions
     implementation(libs.accompanist.permissions)

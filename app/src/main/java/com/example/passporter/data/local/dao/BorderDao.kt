@@ -13,6 +13,18 @@ interface BorderDao {
     @Query("SELECT * FROM border_points")
     fun getBorderPoints(): Flow<List<BorderPointEntity>>
 
+    @Query("""
+        SELECT * FROM border_points 
+        WHERE latitude BETWEEN :south AND :north
+        AND longitude BETWEEN :west AND :east
+    """)
+    fun getBorderPointsInBounds(
+        south: Double,
+        north: Double,
+        west: Double,
+        east: Double
+    ): Flow<List<BorderPointEntity>>
+
     @Query("SELECT * FROM border_points WHERE id = :id")
     suspend fun getBorderPoint(id: String): BorderPointEntity?
 

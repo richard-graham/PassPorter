@@ -5,22 +5,23 @@ import androidx.lifecycle.viewModelScope
 import com.example.passporter.domain.entity.BorderPoint
 import com.example.passporter.domain.location.LocationManagerImpl
 import com.example.passporter.domain.usecase.border.AddBorderPointUseCase
-import com.example.passporter.domain.usecase.border.GetBorderPointsUseCase
+import com.example.passporter.domain.usecase.border.GetBorderPointsByCoordinatesUseCase
+import com.example.passporter.domain.usecase.border.SyncBorderPointsUseCase
 import com.example.passporter.presentation.util.ResultUtil
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val getBorderPointsUseCase: GetBorderPointsUseCase,
+    private val syncBorderPointsUseCase: SyncBorderPointsUseCase,
+    private val getBorderPointsByCoordinatesUseCase: GetBorderPointsByCoordinatesUseCase,
     private val addBorderPointUseCase: AddBorderPointUseCase,
 //    private val subscribeToBorderPointUseCase: SubscribeToBorderPointUseCase,
     private val locationManager: LocationManagerImpl
@@ -46,43 +47,72 @@ class MapViewModel @Inject constructor(
 
                 // Launch border points loading
                 launch {
-                    getBorderPointsUseCase().collect { result ->
+                    syncBorderPointsUseCase().collect { result ->
                         when (result) {
-                            is ResultUtil.Success -> borderPointsFlow.value = result.data
+                            is ResultUtil.Success -> {
+//                                borderPointsFlow.value = result.data
+                                _state.value = MapScreenState.Success(
+                                    borderPoints = emptyList()
+                                )
+//                                borderPointsFlow.value = emptyList()
+                            }
                             is ResultUtil.Error -> _state.value = MapScreenState.Error(
                                 result.exception.message ?: "Failed to load border points"
                             )
                         }
                     }
                 }
-
-                // Launch location loading in parallel
-                launch {
-                    locationManager.getLocationUpdates().collect { result ->
-                        locationFlow.value = result.lastLocation?.let {
-                            LatLng(it.latitude, it.longitude)
-                        }
-                    }
-                }
-
-                // Combine results but emit success state as soon as we have border points
-                combine(borderPointsFlow, locationFlow) { points, location ->
-                    if (points.isNotEmpty()) {
-                        MapScreenState.Success(
-                            borderPoints = points,
-                            userLocation = location
-                        )
-                    } else {
-                        _state.value
-                    }
-                }.collect { newState ->
-                    _state.value = newState
-                }
-
-            } catch (e: SecurityException) {
-                _state.value = MapScreenState.LocationPermissionRequired
+//
+//                // Launch location loading in parallel
+//                launch {
+//                    locationManager.getLocationUpdates().collect { result ->
+//                        locationFlow.value = result.lastLocation?.let {
+//                            LatLng(it.latitude, it.longitude)
+//                        }
+//                    }
+//                }
+//
+//                // Combine results but emit success state as soon as we have border points
+//                combine(borderPointsFlow, locationFlow) { points, location ->
+//
+//                    MapScreenState.Success(
+//                        borderPoints = points,
+//                        userLocation = location
+//                    )
+//
+//                }.collect { newState ->
+//                    _state.value = newState
+//                }
+//
+//            } catch (e: SecurityException) {
+//                _state.value = MapScreenState.LocationPermissionRequired
             } catch (e: Exception) {
                 _state.value = MapScreenState.Error(e.message ?: "Unknown error occurred")
+            }
+        }
+    }
+
+    fun onBoundsChange(bounds: LatLngBounds?, zoom: Float) {
+        viewModelScope.launch {
+            if (zoom < 5f) {
+                borderPointsFlow.value = emptyList()
+                return@launch
+            } else if (bounds != null) {
+                getBorderPointsByCoordinatesUseCase(bounds = bounds).collect { result ->
+                    when (result) {
+                        is ResultUtil.Success -> {
+                            borderPointsFlow.value = result.data
+                            _state.value = MapScreenState.Success(
+                                borderPoints = result.data
+                            )
+
+                        }
+
+                        is ResultUtil.Error -> _state.value = MapScreenState.Error(
+                            result.exception.message ?: "Failed to load border points"
+                        )
+                    }
+                }
             }
         }
     }
@@ -108,10 +138,12 @@ class MapViewModel @Inject constructor(
 
     private fun getBorderPoints() {
         viewModelScope.launch {
-            getBorderPointsUseCase().collect { result ->
+            syncBorderPointsUseCase().collect { result ->
                 _state.value = when (result) {
                     is ResultUtil.Success -> MapScreenState.Success(result.data)
-                    is ResultUtil.Error -> MapScreenState.Error(result.exception.message ?: "Unknown error")
+                    is ResultUtil.Error -> MapScreenState.Error(
+                        result.exception.message ?: "Unknown error"
+                    )
                 }
             }
         }

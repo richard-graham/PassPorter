@@ -13,7 +13,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,7 +21,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.passporter.presentation.feature.map.components.LocationPermissionRequest
 import com.example.passporter.presentation.feature.map.components.MapContent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -75,6 +73,7 @@ fun MapScreen(
                         userLocation = currentState.userLocation,
                         selectedBorderPoint = currentState.selectedBorderPoint,
                         onBorderPointClick = viewModel::selectBorderPoint,
+                        onBoundsChange = viewModel::onBoundsChange,
                         onDismissSelection = viewModel::clearSelectedBorderPoint
                     )
                 }

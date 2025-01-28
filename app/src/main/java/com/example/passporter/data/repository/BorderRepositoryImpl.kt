@@ -9,12 +9,10 @@ import com.example.passporter.domain.entity.BorderPoint
 import com.example.passporter.domain.entity.BorderUpdate
 import com.example.passporter.domain.repository.BorderRepository
 import com.example.passporter.presentation.util.ResultUtil
-import kotlinx.coroutines.Dispatchers
+import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -30,15 +28,7 @@ class BorderRepositoryImpl @Inject constructor(
     private val dispatcherProvider: DispatcherProvider
 ) : BorderRepository {
 
-    override fun getBorderPoints(): Flow<List<BorderPoint>> = channelFlow {
-        // Launch database query immediately
-        launch(dispatcherProvider.io) {
-            val localData = borderDao.getBorderPoints().first()
-            if (localData.isNotEmpty()) {
-                send(localData.map(borderPointMapper::toDomain))
-            }
-        }
-
+    override fun syncBorderPoints(): Flow<List<BorderPoint>> = channelFlow {
         // If database was empty, fetch from network
         if (borderDao.getBorderPoints().first().isEmpty()) {
             firestoreService.getBorderPoints()
@@ -49,10 +39,26 @@ class BorderRepositoryImpl @Inject constructor(
                             borderDao.insertBorderPoint(borderPointMapper.toEntity(it))
                         }
                     }
-                    send(borderPoints)
+                    send(emptyList<BorderPoint>())
                 }
+        } else {
+            send(emptyList())
         }
     }.flowOn(dispatcherProvider.io)
+
+    override fun getBorderPointsByCoordinates(bounds: LatLngBounds): Flow<List<BorderPoint>> = channelFlow {
+        launch(dispatcherProvider.io) {
+            val borderPoints = borderDao.getBorderPointsInBounds(
+                south = bounds.southwest.latitude,
+                north = bounds.northeast.latitude,
+                west = bounds.southwest.longitude,
+                east = bounds.northeast.longitude
+            ).first()
+            if (borderPoints.isNotEmpty()) {
+                send(borderPoints.map(borderPointMapper::toDomain))
+            }
+        }
+    }
 
     override suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> =
         withContext(dispatcherProvider.io) {
