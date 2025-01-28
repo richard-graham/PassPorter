@@ -15,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,10 +35,10 @@ class MapViewModel @Inject constructor(
     private val locationFlow = MutableStateFlow<LatLng?>(null)
 
     init {
-        loadData()
+        initialiseScreen()
     }
 
-    private fun loadData() {
+    private fun initialiseScreen() {
         viewModelScope.launch {
             try {
                 if (!locationManager.hasLocationPermissions()) {
@@ -47,14 +48,10 @@ class MapViewModel @Inject constructor(
 
                 // Launch border points loading
                 launch {
-                    syncBorderPointsUseCase().collect { result ->
+                    syncBorderPointsUseCase().collect{ result ->
                         when (result) {
                             is ResultUtil.Success -> {
-//                                borderPointsFlow.value = result.data
-                                _state.value = MapScreenState.Success(
-                                    borderPoints = emptyList()
-                                )
-//                                borderPointsFlow.value = emptyList()
+                                borderPointsFlow.value = emptyList()
                             }
                             is ResultUtil.Error -> _state.value = MapScreenState.Error(
                                 result.exception.message ?: "Failed to load border points"
@@ -62,30 +59,29 @@ class MapViewModel @Inject constructor(
                         }
                     }
                 }
-//
-//                // Launch location loading in parallel
-//                launch {
-//                    locationManager.getLocationUpdates().collect { result ->
-//                        locationFlow.value = result.lastLocation?.let {
-//                            LatLng(it.latitude, it.longitude)
-//                        }
-//                    }
-//                }
-//
+
+                // Launch location loading in parallel
+                launch {
+                    locationManager.getLocationUpdates().collect { result ->
+                        locationFlow.value = result.lastLocation?.let {
+                            LatLng(it.latitude, it.longitude)
+                        }
+                    }
+                }
+
 //                // Combine results but emit success state as soon as we have border points
-//                combine(borderPointsFlow, locationFlow) { points, location ->
-//
-//                    MapScreenState.Success(
-//                        borderPoints = points,
-//                        userLocation = location
-//                    )
-//
-//                }.collect { newState ->
-//                    _state.value = newState
-//                }
-//
-//            } catch (e: SecurityException) {
-//                _state.value = MapScreenState.LocationPermissionRequired
+                combine(borderPointsFlow, locationFlow) { points, location ->
+                    MapScreenState.Success(
+                        borderPoints = points,
+                        userLocation = location
+                    )
+
+                }.collect { newState ->
+                    _state.value = newState
+                }
+
+            } catch (e: SecurityException) {
+                _state.value = MapScreenState.LocationPermissionRequired
             } catch (e: Exception) {
                 _state.value = MapScreenState.Error(e.message ?: "Unknown error occurred")
             }
@@ -95,13 +91,12 @@ class MapViewModel @Inject constructor(
     fun onBoundsChange(bounds: LatLngBounds?, zoom: Float) {
         viewModelScope.launch {
             if (zoom < 5f) {
-                borderPointsFlow.value = emptyList()
+                _state.value = MapScreenState.Success(borderPoints = emptyList())
                 return@launch
             } else if (bounds != null) {
                 getBorderPointsByCoordinatesUseCase(bounds = bounds).collect { result ->
                     when (result) {
                         is ResultUtil.Success -> {
-                            borderPointsFlow.value = result.data
                             _state.value = MapScreenState.Success(
                                 borderPoints = result.data
                             )
@@ -119,7 +114,7 @@ class MapViewModel @Inject constructor(
 
     fun onPermissionGranted() {
         _state.value = MapScreenState.Loading
-        loadData()
+        initialiseScreen()
     }
 
     fun selectBorderPoint(borderPoint: BorderPoint) {
@@ -148,30 +143,6 @@ class MapViewModel @Inject constructor(
             }
         }
     }
-//
-//    fun startLocationUpdates() {
-//        viewModelScope.launch {
-//            try {
-//                if (!locationManager.hasLocationPermissions()) {
-//                    _locationState.value = LocationState.RequiresPermission
-//                    return@launch
-//                }
-//
-//                locationManager.getLocationUpdates()
-//                    .collect { result ->
-//                        result.lastLocation?.let { location ->
-//                            _locationState.value = LocationState.Success(
-//                                LatLng(location.latitude, location.longitude)
-//                            )
-//                        }
-//                    }
-//            } catch (e: SecurityException) {
-//                _locationState.value = LocationState.RequiresPermission
-//            } catch (e: LocationException) {
-//                _locationState.value = LocationState.Error(e.message ?: "Location error")
-//            }
-//        }
-//    }
 
     fun addBorderPoint(
         name: String,

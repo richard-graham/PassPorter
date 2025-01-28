@@ -31,6 +31,15 @@ fun MapContent(
         )
     }
 
+    LaunchedEffect(userLocation) {
+        if (userLocation != null) {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                userLocation,
+                cameraPositionState.position.zoom
+            )
+        }
+    }
+
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             onBoundsChange(
