@@ -26,7 +26,7 @@ interface BorderDao {
     ): Flow<List<BorderPointEntity>>
 
     @Query("SELECT * FROM border_points WHERE id = :id")
-    suspend fun getBorderPoint(id: String): BorderPointEntity?
+    fun getBorderPointById(id: String): Flow<BorderPointEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBorderPoint(borderPoint: BorderPointEntity)

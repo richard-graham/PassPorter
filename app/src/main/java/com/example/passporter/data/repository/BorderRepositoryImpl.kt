@@ -60,6 +60,20 @@ class BorderRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getBorderPointById(id: String): ResultUtil<BorderPoint> =
+        withContext(dispatcherProvider.io) {
+            try {
+                val borderPoint = borderDao.getBorderPointById(id).first()
+                if (borderPoint != null) {
+                    ResultUtil.Success(borderPointMapper.toDomain(borderPoint))
+                } else {
+                   ResultUtil.Error(Throwable("Border point not found"))
+                }
+            } catch (e: Exception) {
+                ResultUtil.Error(e)
+            }
+        }
+
     override suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> =
         withContext(dispatcherProvider.io) {
             try {

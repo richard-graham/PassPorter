@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.passporter.domain.entity.BorderPoint
 import com.example.passporter.presentation.feature.map.components.LocationPermissionRequest
 import com.example.passporter.presentation.feature.map.components.MapContent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -28,7 +29,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 fun MapScreen(
     modifier: Modifier,
     viewModel: MapViewModel = hiltViewModel(),
-    onNavigateToDetail: (String) -> Unit
+    onNavigateToBorderDetail: (String) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -74,7 +75,8 @@ fun MapScreen(
                         selectedBorderPoint = currentState.selectedBorderPoint,
                         onBorderPointClick = viewModel::selectBorderPoint,
                         onBoundsChange = viewModel::onBoundsChange,
-                        onDismissSelection = viewModel::clearSelectedBorderPoint
+                        onDismissSelection = viewModel::clearSelectedBorderPoint,
+                        onNavigateToBorderDetail = onNavigateToBorderDetail
                     )
                 }
             }

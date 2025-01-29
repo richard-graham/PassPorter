@@ -46,44 +46,44 @@ class MapViewModel @Inject constructor(
                     return@launch
                 }
 
-                // Launch border points loading
-                launch {
-                    syncBorderPointsUseCase().collect{ result ->
-                        when (result) {
-                            is ResultUtil.Success -> {
-                                borderPointsFlow.value = emptyList()
+                // First, wait for initial border points sync
+                syncBorderPointsUseCase().collect { result ->
+                    when (result) {
+                        is ResultUtil.Success -> {
+                            borderPointsFlow.value = result.data
+                            // Now that we have border points, start collecting location updates
+                            launch {
+                                locationManager.getLocationUpdates().collect { locationResult ->
+                                    locationFlow.value = locationResult.lastLocation?.let {
+                                        LatLng(it.latitude, it.longitude)
+                                    }
+                                }
                             }
-                            is ResultUtil.Error -> _state.value = MapScreenState.Error(
+
+                            // Combine border points with location updates
+                            combine(borderPointsFlow, locationFlow) { borderPoints, location ->
+                                if (location != null) {
+                                    MapScreenState.Success(
+                                        borderPoints = borderPoints,
+                                        userLocation = location
+                                    )
+                                } else {
+                                    MapScreenState.Loading
+                                }
+                            }.collect { newState ->
+                                _state.value = newState
+                            }
+                        }
+
+                        is ResultUtil.Error -> {
+                            _state.value = MapScreenState.Error(
                                 result.exception.message ?: "Failed to load border points"
                             )
                         }
                     }
                 }
-
-                // Launch location loading in parallel
-                launch {
-                    locationManager.getLocationUpdates().collect { result ->
-                        locationFlow.value = result.lastLocation?.let {
-                            LatLng(it.latitude, it.longitude)
-                        }
-                    }
-                }
-
-//                // Combine results but emit success state as soon as we have border points
-                combine(borderPointsFlow, locationFlow) { points, location ->
-                    MapScreenState.Success(
-                        borderPoints = points,
-                        userLocation = location
-                    )
-
-                }.collect { newState ->
-                    _state.value = newState
-                }
-
             } catch (e: SecurityException) {
                 _state.value = MapScreenState.LocationPermissionRequired
-            } catch (e: Exception) {
-                _state.value = MapScreenState.Error(e.message ?: "Unknown error occurred")
             }
         }
     }

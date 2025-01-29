@@ -2,9 +2,12 @@ package com.example.passporter.presentation.feature.map.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.passporter.domain.entity.BorderPoint
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -22,7 +25,8 @@ fun MapContent(
     selectedBorderPoint: BorderPoint?,
     onBorderPointClick: (BorderPoint) -> Unit,
     onBoundsChange: (LatLngBounds?, Float) -> Unit,
-    onDismissSelection: () -> Unit
+    onDismissSelection: () -> Unit,
+    onNavigateToBorderDetail: (String) -> Unit
 ) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
@@ -80,6 +84,14 @@ fun MapContent(
 
         // Selected border point details
         selectedBorderPoint?.let { borderPoint ->
+            BorderPointPopup(
+                borderPoint = borderPoint,
+                onDismiss = onDismissSelection,
+                onNavigateToBorderDetail = onNavigateToBorderDetail,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            )
         }
     }
 }

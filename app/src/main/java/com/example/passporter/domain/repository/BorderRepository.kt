@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 interface BorderRepository {
     fun syncBorderPoints(): Flow<List<BorderPoint>>
     fun getBorderPointsByCoordinates(bounds: LatLngBounds): Flow<List<BorderPoint>>
+    suspend fun getBorderPointById(id: String): ResultUtil<BorderPoint>
     suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit>
     fun getBorderUpdates(borderPointId: String): Flow<List<BorderUpdate>>
     suspend fun addBorderUpdate(update: BorderUpdate): ResultUtil<Unit>
