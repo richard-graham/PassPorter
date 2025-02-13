@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.passporter.domain.entity.BorderPoint
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -111,6 +112,7 @@ fun DetailContent(
                         state = MarkerState(
                             position = LatLng(borderPoint.latitude, borderPoint.longitude)
                         ),
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
                         title = borderPoint.name
                     )
                 }
@@ -188,9 +190,10 @@ fun DetailContent(
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Traffic Types Card
                 ElevatedCard(

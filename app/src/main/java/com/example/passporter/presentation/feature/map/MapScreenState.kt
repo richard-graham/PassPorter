@@ -1,6 +1,7 @@
 package com.example.passporter.presentation.feature.map
 
 import com.example.passporter.domain.entity.BorderPoint
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 
 sealed class MapScreenState {
@@ -10,6 +11,7 @@ sealed class MapScreenState {
     data class Success(
         val borderPoints: List<BorderPoint>,
         val userLocation: LatLng? = null,
-        val selectedBorderPoint: BorderPoint? = null
+        val selectedBorderPoint: BorderPoint? = null,
+        val lastCameraPosition: CameraPosition? = null
     ) : MapScreenState()
 }

@@ -4,13 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.passporter.domain.entity.BorderPoint
 import com.example.passporter.domain.location.LocationManagerImpl
-import com.example.passporter.domain.usecase.border.AddBorderPointUseCase
 import com.example.passporter.domain.usecase.border.GetBorderPointsByCoordinatesUseCase
 import com.example.passporter.domain.usecase.border.SyncBorderPointsUseCase
 import com.example.passporter.presentation.util.ResultUtil
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,8 +22,6 @@ import javax.inject.Inject
 class MapViewModel @Inject constructor(
     private val syncBorderPointsUseCase: SyncBorderPointsUseCase,
     private val getBorderPointsByCoordinatesUseCase: GetBorderPointsByCoordinatesUseCase,
-    private val addBorderPointUseCase: AddBorderPointUseCase,
-//    private val subscribeToBorderPointUseCase: SubscribeToBorderPointUseCase,
     private val locationManager: LocationManagerImpl
 ) : ViewModel() {
 
@@ -34,6 +31,7 @@ class MapViewModel @Inject constructor(
     private val borderPointsFlow = MutableStateFlow<List<BorderPoint>>(emptyList())
     private val locationFlow = MutableStateFlow<LatLng?>(null)
     private val selectedBorderPointFlow = MutableStateFlow<BorderPoint?>(null)
+    private val lastCameraPositionFlow = MutableStateFlow<CameraPosition?>(null)
 
     init {
         initialiseScreen()
@@ -65,13 +63,15 @@ class MapViewModel @Inject constructor(
                             combine(
                                 borderPointsFlow,
                                 locationFlow,
-                                selectedBorderPointFlow
-                            ) { borderPoints, location, selectedBorderPoint ->
+                                selectedBorderPointFlow,
+                                lastCameraPositionFlow
+                            ) { borderPoints, location, selectedBorderPoint, lastPosition ->
                                 if (location != null) {
                                     MapScreenState.Success(
                                         borderPoints = borderPoints,
                                         userLocation = location,
-                                        selectedBorderPoint = selectedBorderPoint
+                                        selectedBorderPoint = selectedBorderPoint,
+                                        lastCameraPosition = lastPosition
                                     )
                                 } else {
                                     MapScreenState.Loading
@@ -131,56 +131,7 @@ class MapViewModel @Inject constructor(
         selectedBorderPointFlow.value = null
     }
 
-    private fun getBorderPoints() {
-        viewModelScope.launch {
-            syncBorderPointsUseCase().collect { result ->
-                _state.value = when (result) {
-                    is ResultUtil.Success -> MapScreenState.Success(result.data)
-                    is ResultUtil.Error -> MapScreenState.Error(
-                        result.exception.message ?: "Unknown error"
-                    )
-                }
-            }
-        }
-    }
-
-//    fun addBorderPoint(
-//        name: String,
-//        location: LatLng,
-//        countryA: String,
-//        countryB: String,
-//        description: String,
-//        borderType: String?,
-//        crossingType: String?,
-//        sourceId: String,
-//        dataSource: String
-//    ) {
-//        viewModelScope.launch {
-//            val result = addBorderPointUseCase(
-//                name = name,
-//                latitude = location.latitude,
-//                longitude = location.longitude,
-//                countryA = countryA,
-//                countryB = countryB,
-//                description = description,
-//                borderType = borderType,
-//                crossingType = crossingType,
-//                sourceId = sourceId,
-//                dataSource = dataSource
-//            )
-//            when (result) {
-//                is ResultUtil.Success -> getBorderPoints()
-//                is ResultUtil.Error -> _state.value = MapScreenState.Error(
-//                    result.exception.message ?: "Failed to add border point"
-//                )
-//            }
-//        }
-//    }
-
-    fun subscribeToBorderPoint(borderPointId: String) {
-        viewModelScope.launch {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
-//            subscribeToBorderPointUseCase(userId, borderPointId)
-        }
+    fun updateCameraPosition(position: CameraPosition) {
+        lastCameraPositionFlow.value = position
     }
 }

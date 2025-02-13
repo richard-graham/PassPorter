@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.passporter.domain.entity.BorderPoint
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -23,13 +24,20 @@ fun MapContent(
     borderPoints: List<BorderPoint>,
     userLocation: LatLng?,
     selectedBorderPoint: BorderPoint?,
+    lastCameraPosition: CameraPosition?,
     onBorderPointClick: (BorderPoint) -> Unit,
     onBoundsChange: (LatLngBounds?, Float) -> Unit,
     onDismissSelection: () -> Unit,
+    onCameraPositionChange: (CameraPosition) -> Unit,
     onNavigateToBorderDetail: (String) -> Unit
 ) {
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(
+        position = selectedBorderPoint?.let {
+            CameraPosition.fromLatLngZoom(
+                LatLng(it.latitude, it.longitude),
+                lastCameraPosition?.zoom ?: 6f  // Use last zoom or default
+            )
+        } ?: lastCameraPosition ?: CameraPosition.fromLatLngZoom(
             userLocation ?: LatLng(0.0, 0.0),
             6f
         )
@@ -44,12 +52,29 @@ fun MapContent(
         }
     }
 
+    LaunchedEffect(selectedBorderPoint) {
+        selectedBorderPoint?.let {
+            cameraPositionState.position = CameraPosition.Builder()
+                .target(LatLng(it.latitude, it.longitude))
+                .zoom(cameraPositionState.position.zoom)  // Maintain current zoom
+                .bearing(cameraPositionState.position.bearing)  // Maintain current bearing
+                .tilt(cameraPositionState.position.tilt)  // Maintain current tilt
+                .build()
+        }
+    }
+
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             onBoundsChange(
                 cameraPositionState.projection?.visibleRegion?.latLngBounds,
                 cameraPositionState.position.zoom
             )
+        }
+    }
+
+    LaunchedEffect(cameraPositionState.position) {
+        if (selectedBorderPoint == null) {
+            onCameraPositionChange(cameraPositionState.position)
         }
     }
 
@@ -69,11 +94,18 @@ fun MapContent(
         ) {
             // Border point markers
             borderPoints.forEach { borderPoint ->
+                val isSelected = selectedBorderPoint?.id == borderPoint.id
+
                 Marker(
                     state = MarkerState(
                         position = LatLng(borderPoint.latitude, borderPoint.longitude)
                     ),
                     title = borderPoint.name,
+                    icon = if (isSelected) {
+                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                    } else {
+                        BitmapDescriptorFactory.defaultMarker()
+                    },
                     onClick = {
                         onBorderPointClick(borderPoint)
                         true
