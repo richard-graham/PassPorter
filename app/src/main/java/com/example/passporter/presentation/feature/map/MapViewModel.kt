@@ -28,6 +28,9 @@ class MapViewModel @Inject constructor(
     private val _state = MutableStateFlow<MapScreenState>(MapScreenState.Loading)
     val state: StateFlow<MapScreenState> = _state.asStateFlow()
 
+    private val _selectedLocation = MutableStateFlow<LatLng?>(null)
+    val selectedLocation: StateFlow<LatLng?> = _selectedLocation.asStateFlow()
+
     private val borderPointsFlow = MutableStateFlow<List<BorderPoint>>(emptyList())
     private val locationFlow = MutableStateFlow<LatLng?>(null)
     private val selectedBorderPointFlow = MutableStateFlow<BorderPoint?>(null)
@@ -92,6 +95,10 @@ class MapViewModel @Inject constructor(
                 _state.value = MapScreenState.LocationPermissionRequired
             }
         }
+    }
+
+    fun onMapClick(latLng: LatLng) {
+        _selectedLocation.value = latLng
     }
 
     fun onBoundsChange(bounds: LatLngBounds?, zoom: Float) {

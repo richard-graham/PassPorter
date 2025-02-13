@@ -22,14 +22,17 @@ import com.example.passporter.presentation.feature.map.components.LocationPermis
 import com.example.passporter.presentation.feature.map.components.MapContent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.maps.model.LatLng
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MapScreen(
     viewModel: MapViewModel = hiltViewModel(),
-    onNavigateToBorderDetail: (String) -> Unit
+    onNavigateToBorderDetail: (String) -> Unit,
+    onNavigateToAdd: (LatLng) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val selectedLocation by viewModel.selectedLocation.collectAsState()
 
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -72,11 +75,14 @@ fun MapScreen(
                         userLocation = currentState.userLocation,
                         selectedBorderPoint = currentState.selectedBorderPoint,
                         lastCameraPosition = currentState.lastCameraPosition,
+                        selectedLocation = selectedLocation,
                         onBorderPointClick = viewModel::selectBorderPoint,
                         onBoundsChange = viewModel::onBoundsChange,
                         onDismissSelection = viewModel::clearSelectedBorderPoint,
                         onCameraPositionChange = viewModel::updateCameraPosition,
-                        onNavigateToBorderDetail = onNavigateToBorderDetail
+                        onNavigateToBorderDetail = onNavigateToBorderDetail,
+                        onNavigateToAdd = onNavigateToAdd,
+                        onMapClick = viewModel::onMapClick
                     )
                 }
             }

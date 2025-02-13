@@ -3,6 +3,10 @@ package com.example.passporter.presentation.feature.map.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -25,12 +29,16 @@ fun MapContent(
     userLocation: LatLng?,
     selectedBorderPoint: BorderPoint?,
     lastCameraPosition: CameraPosition?,
+    selectedLocation: LatLng?,
     onBorderPointClick: (BorderPoint) -> Unit,
     onBoundsChange: (LatLngBounds?, Float) -> Unit,
     onDismissSelection: () -> Unit,
     onCameraPositionChange: (CameraPosition) -> Unit,
-    onNavigateToBorderDetail: (String) -> Unit
+    onNavigateToBorderDetail: (String) -> Unit,
+    onNavigateToAdd: (LatLng) -> Unit,
+    onMapClick: (LatLng) -> Unit
 ) {
+
     val cameraPositionState = rememberCameraPositionState {
         position = selectedBorderPoint?.let {
             CameraPosition.fromLatLngZoom(
@@ -85,6 +93,7 @@ fun MapContent(
             uiSettings = MapUiSettings(
                 myLocationButtonEnabled = userLocation != null
             ),
+            onMapClick = onMapClick,
             onMapLoaded = {
                 onBoundsChange(
                     cameraPositionState.projection?.visibleRegion?.latLngBounds,
@@ -124,6 +133,17 @@ fun MapContent(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 16.dp)
             )
+        }
+
+        selectedLocation?.let { location ->
+            FloatingActionButton(
+                onClick = { onNavigateToAdd(location) },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Border Point")
+            }
         }
     }
 }

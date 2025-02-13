@@ -1,0 +1,216 @@
+# Passporter System Documentation
+
+## File Structure
+
+```
+com.example.passporter/
+├── data/                           # Data Layer
+│   ├── local/
+│   │   ├── dao/
+│   │   │   └── BorderDao.kt       # Local database access
+│   │   ├── database/
+│   │   │   └── BorderDatabase.kt  # Room configuration
+│   │   └── entity/
+│   │       ├── BorderPointEntity.kt
+│   │       └── BorderUpdateEntity.kt
+│   ├── mapper/
+│   │   ├── BorderPointMapper.kt
+│   │   └── BorderUpdateMapper.kt
+│   ├── remote/
+│   │   ├── api/
+│   │   │   └── FirestoreService.kt
+│   │   └── model/
+│   │       ├── BorderPointDto.kt
+│   │       └── BorderUpdateDto.kt
+│   └── repository/
+│       └── BorderRepositoryImpl.kt
+├── di/                            # Dependency Injection
+│   ├── AppModule.kt
+│   ├── DataModule.kt
+│   └── DispatcherProvider.kt
+├── domain/                        # Domain Layer
+│   ├── entity/
+│   │   ├── BorderPoint.kt
+│   │   ├── BorderStatus.kt
+│   │   └── BorderUpdate.kt
+│   ├── location/
+│   │   ├── LocationManager.kt
+│   │   └── LocationManagerImpl.kt
+│   ├── repository/
+│   │   └── BorderRepository.kt
+│   └── usecase/
+│       └── border/
+│           ├── AddBorderPointUseCase.kt
+│           └── GetBorderPointDetailsUseCase.kt
+└── presentation/                  # Presentation Layer
+    ├── feature/
+    │   ├── detail/
+    │   │   ├── BorderDetailScreen.kt
+    │   │   ├── BorderDetailViewModel.kt
+    │   │   └── components/
+    │   │       └── DetailContent.kt
+    │   └── map/
+    │       ├── MapScreen.kt
+    │       ├── MapViewModel.kt
+    │       └── components/
+    │           ├── BorderPointPopup.kt
+    │           ├── LocationPermissionRequest.kt
+    │           └── MapContent.kt
+    ├── navigation/
+    │   └── NavGraph.kt
+    ├── theme/
+    │   ├── Color.kt
+    │   ├── Theme.kt
+    │   └── Type.kt
+    └── util/
+        └── ResultUtil.kt
+```
+
+## Application Components
+
+### Application Setup
+- PassporterApplication: Hilt-enabled application class
+  - Google Play Services verification
+  - Maps initialization
+  - Firebase setup
+  - StrictMode configuration in debug
+  - Memory management
+
+### Main Activity
+- Jetpack Compose based
+- Edge-to-edge display support
+- Navigation setup
+- Theme implementation
+
+## Presentation Layer
+
+### Navigation
+- Two main screens:
+  - Map (start destination)
+  - Border Details
+- Route parameters for border ID
+- Compose Navigation implementation
+
+### Map Feature
+
+#### MapScreen
+Components:
+- GoogleMap integration
+- Location permission handling
+- Border point markers
+- Bottom sheet details popup
+
+States:
+- Loading
+- LocationPermissionRequired
+- Error
+- Success (with border points, location, selection)
+
+#### MapViewModel
+Responsibilities:
+- Border point management
+- Location tracking
+- Camera position handling
+- Bounds-based updates
+- Permission management
+
+### Detail Feature
+
+#### BorderDetailScreen
+Components:
+- Detailed border point information
+- Map preview
+- Facility information
+- Operating hours
+- Traffic types
+
+States:
+- Loading
+- Error
+- Success (with border point data)
+
+### UI Components
+
+#### Common Components
+- BorderPointPopup: Bottom sheet for selected points
+- LocationPermissionRequest: Permission UI
+- DetailContent: Border point details layout
+- MapContent: Main map interface
+
+#### Theme
+- Material3 implementation
+- Dynamic color support
+- Custom typography
+- Light/dark theme support
+
+## UI State Management
+
+### Screen States
+1. MapScreenState
+   - Loading
+   - LocationPermissionRequired
+   - Error
+   - Success
+
+2. BorderDetailsState
+   - Loading
+   - Error
+   - Success
+
+### Location State
+- Initial
+- RequiresPermission
+- Success
+- Error
+
+## Features
+
+### Map Functionality
+- Real-time location tracking
+- Border point visualization
+- Geospatial queries
+- Point selection
+- Camera position persistence
+
+### Border Details
+- Detailed information display
+- Facilities overview
+- Traffic type indication
+- Operating hours
+- Status updates
+
+### Location Services
+- Permission management
+- Real-time updates
+- Settings verification
+- Error handling
+
+## Technical Implementation
+
+### Architecture Pattern
+- MVVM with Clean Architecture
+- Compose for UI
+- ViewModel for state management
+- Kotlin Flow for reactive updates
+
+### UI Components
+- Material3 components
+- Custom composables
+- Google Maps Compose
+- Responsive layouts
+
+### Maps Integration
+- Google Maps Compose implementation
+- Custom markers
+- Camera position management
+- Bounds tracking
+
+### State Management
+- ViewModel-based state holders
+- Kotlin Flow for reactive updates
+- Result wrapper for error handling
+
+### Navigation
+- Compose Navigation
+- Type-safe routing
+- Deep linking support

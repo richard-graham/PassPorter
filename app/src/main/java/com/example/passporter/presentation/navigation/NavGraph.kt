@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.passporter.presentation.feature.add.AddBorderPointScreen
 import com.example.passporter.presentation.feature.detail.BorderDetailsScreen
 import com.example.passporter.presentation.feature.map.MapScreen
 
@@ -29,9 +30,11 @@ fun NavGraph(
     ) {
         composable(Screen.Map.route) {
             MapScreen(
-                modifier = modifier,
                 onNavigateToBorderDetail = { borderId ->
                     navController.navigate(Screen.BorderDetails.createRoute(borderId))
+                },
+                onNavigateToAdd = { location ->
+                    navController.navigate("add_border_point/${location.latitude}/${location.longitude}")
                 }
             )
         }
@@ -43,6 +46,18 @@ fun NavGraph(
             )
         ) {
             BorderDetailsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "add_border_point/{lat}/{lng}",
+            arguments = listOf(
+                navArgument("lat") { type = NavType.FloatType },
+                navArgument("lng") { type = NavType.FloatType }
+            )
+        ) {
+            AddBorderPointScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
