@@ -41,10 +41,8 @@ fun NavGraph(
             arguments = listOf(
                 navArgument("borderId") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val borderId = requireNotNull(backStackEntry.arguments?.getString("borderId"))
+        ) {
             BorderDetailsScreen(
-                borderId = borderId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

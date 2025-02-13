@@ -33,6 +33,7 @@ class MapViewModel @Inject constructor(
 
     private val borderPointsFlow = MutableStateFlow<List<BorderPoint>>(emptyList())
     private val locationFlow = MutableStateFlow<LatLng?>(null)
+    private val selectedBorderPointFlow = MutableStateFlow<BorderPoint?>(null)
 
     init {
         initialiseScreen()
@@ -61,11 +62,16 @@ class MapViewModel @Inject constructor(
                             }
 
                             // Combine border points with location updates
-                            combine(borderPointsFlow, locationFlow) { borderPoints, location ->
+                            combine(
+                                borderPointsFlow,
+                                locationFlow,
+                                selectedBorderPointFlow
+                            ) { borderPoints, location, selectedBorderPoint ->
                                 if (location != null) {
                                     MapScreenState.Success(
                                         borderPoints = borderPoints,
-                                        userLocation = location
+                                        userLocation = location,
+                                        selectedBorderPoint = selectedBorderPoint
                                     )
                                 } else {
                                     MapScreenState.Loading
@@ -91,18 +97,14 @@ class MapViewModel @Inject constructor(
     fun onBoundsChange(bounds: LatLngBounds?, zoom: Float) {
         viewModelScope.launch {
             if (zoom < 5f) {
-                _state.value = MapScreenState.Success(borderPoints = emptyList())
+                borderPointsFlow.value = emptyList()
                 return@launch
             } else if (bounds != null) {
                 getBorderPointsByCoordinatesUseCase(bounds = bounds).collect { result ->
                     when (result) {
                         is ResultUtil.Success -> {
-                            _state.value = MapScreenState.Success(
-                                borderPoints = result.data
-                            )
-
+                            borderPointsFlow.value = result.data
                         }
-
                         is ResultUtil.Error -> _state.value = MapScreenState.Error(
                             result.exception.message ?: "Failed to load border points"
                         )
@@ -118,17 +120,15 @@ class MapViewModel @Inject constructor(
     }
 
     fun selectBorderPoint(borderPoint: BorderPoint) {
-        val currentState = _state.value
-        if (currentState is MapScreenState.Success) {
-            _state.value = currentState.copy(selectedBorderPoint = borderPoint)
+        selectedBorderPointFlow.value = borderPoint
+        // Make sure the selected point is included in the border points list
+        if (!borderPointsFlow.value.contains(borderPoint)) {
+            borderPointsFlow.value += borderPoint
         }
     }
 
     fun clearSelectedBorderPoint() {
-        val currentState = _state.value
-        if (currentState is MapScreenState.Success) {
-            _state.value = currentState.copy(selectedBorderPoint = null)
-        }
+        selectedBorderPointFlow.value = null
     }
 
     private fun getBorderPoints() {
