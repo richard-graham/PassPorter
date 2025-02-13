@@ -1,7 +1,10 @@
 package com.example.passporter.domain.usecase.border
 
+import com.example.passporter.domain.entity.Accessibility
 import com.example.passporter.domain.entity.BorderPoint
 import com.example.passporter.domain.entity.BorderStatus
+import com.example.passporter.domain.entity.Facilities
+import com.example.passporter.domain.entity.OperatingHours
 import com.example.passporter.domain.repository.BorderRepository
 import com.example.passporter.presentation.util.ResultUtil
 import java.util.UUID
@@ -20,7 +23,11 @@ class AddBorderPointUseCase @Inject constructor(
         borderType: String?,
         crossingType: String?,
         sourceId: String,
-        dataSource: String
+        dataSource: String,
+        operatingHours: OperatingHours,
+        operatingAuthority: String,
+        accessibility: Accessibility,
+        facilities: Facilities
     ): ResultUtil<Unit> {
         val borderPoint = BorderPoint(
             id = UUID.randomUUID().toString(),
@@ -36,7 +43,11 @@ class AddBorderPointUseCase @Inject constructor(
             borderType = borderType,
             crossingType = crossingType,
             sourceId = sourceId,
-            dataSource = dataSource
+            dataSource = dataSource,
+            operatingHours = operatingHours,
+            operatingAuthority = operatingAuthority,
+            accessibility = accessibility,
+            facilities = facilities
         )
         return borderRepository.addBorderPoint(borderPoint)
     }

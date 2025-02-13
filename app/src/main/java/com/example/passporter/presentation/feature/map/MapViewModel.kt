@@ -144,38 +144,38 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun addBorderPoint(
-        name: String,
-        location: LatLng,
-        countryA: String,
-        countryB: String,
-        description: String,
-        borderType: String?,
-        crossingType: String?,
-        sourceId: String,
-        dataSource: String
-    ) {
-        viewModelScope.launch {
-            val result = addBorderPointUseCase(
-                name = name,
-                latitude = location.latitude,
-                longitude = location.longitude,
-                countryA = countryA,
-                countryB = countryB,
-                description = description,
-                borderType = borderType,
-                crossingType = crossingType,
-                sourceId = sourceId,
-                dataSource = dataSource
-            )
-            when (result) {
-                is ResultUtil.Success -> getBorderPoints()
-                is ResultUtil.Error -> _state.value = MapScreenState.Error(
-                    result.exception.message ?: "Failed to add border point"
-                )
-            }
-        }
-    }
+//    fun addBorderPoint(
+//        name: String,
+//        location: LatLng,
+//        countryA: String,
+//        countryB: String,
+//        description: String,
+//        borderType: String?,
+//        crossingType: String?,
+//        sourceId: String,
+//        dataSource: String
+//    ) {
+//        viewModelScope.launch {
+//            val result = addBorderPointUseCase(
+//                name = name,
+//                latitude = location.latitude,
+//                longitude = location.longitude,
+//                countryA = countryA,
+//                countryB = countryB,
+//                description = description,
+//                borderType = borderType,
+//                crossingType = crossingType,
+//                sourceId = sourceId,
+//                dataSource = dataSource
+//            )
+//            when (result) {
+//                is ResultUtil.Success -> getBorderPoints()
+//                is ResultUtil.Error -> _state.value = MapScreenState.Error(
+//                    result.exception.message ?: "Failed to add border point"
+//                )
+//            }
+//        }
+//    }
 
     fun subscribeToBorderPoint(borderPointId: String) {
         viewModelScope.launch {
