@@ -3,7 +3,6 @@ package com.example.passporter.data.local.entity
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalDateTime
 
 @Entity(tableName = "border_points")
 data class BorderPointEntity(
