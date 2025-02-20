@@ -98,6 +98,7 @@ dependencies {
 
     // permissions
     implementation(libs.accompanist.permissions)
+    implementation(libs.facebook.login)
 
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.maps)

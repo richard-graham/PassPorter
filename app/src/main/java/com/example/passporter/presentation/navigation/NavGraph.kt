@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.passporter.presentation.feature.add.AddBorderPointScreen
+import com.example.passporter.presentation.feature.auth.AuthScreen
 import com.example.passporter.presentation.feature.detail.BorderDetailsScreen
 import com.example.passporter.presentation.feature.map.MapScreen
 
@@ -16,16 +17,18 @@ sealed class Screen(val route: String) {
     object BorderDetails : Screen("border_details/{borderId}") {
         fun createRoute(borderId: String) = "border_details/$borderId"
     }
+    object Auth : Screen("auth")
 }
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
+    startDestination: String,
     modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Map.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable(Screen.Map.route) {
@@ -59,6 +62,16 @@ fun NavGraph(
         ) {
             AddBorderPointScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Auth.route) {
+            AuthScreen(
+                onAuthSuccess = {
+                    navController.navigate(Screen.Map.route) {
+                        popUpTo(Screen.Auth.route) { inclusive = true }
+                    }
+                }
             )
         }
     }

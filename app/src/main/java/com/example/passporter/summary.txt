@@ -1,49 +1,73 @@
-# Passporter System Documentation
-
-## File Structure
-
-```
 com.example.passporter/
 ├── data/                           # Data Layer
 │   ├── local/
 │   │   ├── dao/
-│   │   │   └── BorderDao.kt       # Local database access
+│   │   │   ├── AuthDao.kt         # User authentication database access
+│   │   │   └── BorderDao.kt       # Border points database access
 │   │   ├── database/
-│   │   │   └── BorderDatabase.kt  # Room configuration
+│   │   │   ├── AuthDatabase.kt    # Room configuration for auth
+│   │   │   └── BorderDatabase.kt  # Room configuration for borders
 │   │   └── entity/
 │   │       ├── BorderPointEntity.kt
-│   │       └── BorderUpdateEntity.kt
+│   │       ├── BorderUpdateEntity.kt
+│   │       └── UserEntity.kt      # Local user data model
 │   ├── mapper/
 │   │   ├── BorderPointMapper.kt
-│   │   └── BorderUpdateMapper.kt
+│   │   ├── BorderUpdateMapper.kt
+│   │   └── UserMapper.kt          # User data mapping utilities
 │   ├── remote/
 │   │   ├── api/
+│   │   │   ├── AuthService.kt     # Authentication interface
+│   │   │   ├── FirebaseAuthService.kt # Firebase auth implementation
 │   │   │   └── FirestoreService.kt
 │   │   └── model/
 │   │       ├── BorderPointDto.kt
-│   │       └── BorderUpdateDto.kt
+│   │       ├── BorderUpdateDto.kt
+│   │       └── UserDto.kt         # Remote user data model
 │   └── repository/
+│       ├── AuthRepositoryImpl.kt   # Auth repository implementation
 │       └── BorderRepositoryImpl.kt
 ├── di/                            # Dependency Injection
 │   ├── AppModule.kt
-│   ├── DataModule.kt
+│   ├── DataModule.kt              # DI for auth and border components
 │   └── DispatcherProvider.kt
 ├── domain/                        # Domain Layer
 │   ├── entity/
 │   │   ├── BorderPoint.kt
 │   │   ├── BorderStatus.kt
-│   │   └── BorderUpdate.kt
+│   │   ├── BorderUpdate.kt
+│   │   └── User.kt               # Domain user model
+│   ├── error/
+│   │   └── AuthError.kt          # Authentication error types
 │   ├── location/
 │   │   ├── LocationManager.kt
 │   │   └── LocationManagerImpl.kt
 │   ├── repository/
+│   │   ├── AuthRepository.kt     # Auth repository interface
 │   │   └── BorderRepository.kt
 │   └── usecase/
+│       ├── auth/                 # Authentication use cases
+│       │   ├── RegisterWithEmailUseCase.kt
+│       │   ├── SignInWithEmailUseCase.kt
+│       │   ├── SignInWithFacebookUseCase.kt
+│       │   └── SignInWithGoogleUseCase.kt
 │       └── border/
 │           ├── AddBorderPointUseCase.kt
 │           └── GetBorderPointDetailsUseCase.kt
 └── presentation/                  # Presentation Layer
     ├── feature/
+    │   ├── auth/                 # Authentication UI
+    │   │   ├── AuthScreen.kt     # Main authentication screen
+    │   │   ├── AuthViewModel.kt  # Authentication state management
+    │   │   ├── AuthUiState.kt    # Authentication UI states
+    │   │   ├── AuthFormState.kt  # Form validation state
+    │   │   ├── model/
+    │   │   │   ├── SocialAuthResult.kt # Social auth responses
+    │   │   │   └── ValidationResult.kt  # Input validation results
+    │   │   └── components/
+    │   │       ├── RegisterForm.kt
+    │   │       ├── SignInForm.kt
+    │   │       └── SocialSignInButton.kt
     │   ├── detail/
     │   │   ├── BorderDetailScreen.kt
     │   │   ├── BorderDetailViewModel.kt
@@ -64,7 +88,6 @@ com.example.passporter/
     │   └── Type.kt
     └── util/
         └── ResultUtil.kt
-```
 
 ## Application Components
 
@@ -72,24 +95,103 @@ com.example.passporter/
 - PassporterApplication: Hilt-enabled application class
   - Google Play Services verification
   - Maps initialization
-  - Firebase setup
+  - Firebase setup and authentication
   - StrictMode configuration in debug
   - Memory management
 
 ### Main Activity
 - Jetpack Compose based
 - Edge-to-edge display support
-- Navigation setup
+- Authentication state management
+- Navigation based on auth state
+- Google Sign-In setup
 - Theme implementation
 
-## Presentation Layer
+## Authentication System
 
-### Navigation
-- Two main screens:
-  - Map (start destination)
-  - Border Details
-- Route parameters for border ID
-- Compose Navigation implementation
+### Data Layer
+
+#### Local Storage
+- Room database for user data persistence
+- AuthDao for user CRUD operations
+- UserEntity for local user data representation
+- Local caching of user credentials
+
+#### Remote Integration
+- Firebase Authentication service
+- Firestore for user profile data
+- Support for email/password, Google, and Facebook authentication
+- Token-based authentication
+- Error handling and mapping
+
+#### Repository Pattern
+- AuthRepository interface defining authentication operations
+- AuthRepositoryImpl handling data synchronization between local and remote
+- Coroutine-based asynchronous operations
+
+### Domain Layer
+
+#### Entity Models
+- User: Domain model for authenticated users
+- AuthError: Sealed class for authentication error handling
+- Validation models for form inputs
+
+#### Use Cases
+- RegisterWithEmailUseCase: New user registration with validation
+- SignInWithEmailUseCase: Email authentication
+- SignInWithGoogleUseCase: Google OAuth integration
+- SignInWithFacebookUseCase: Facebook authentication
+- Input validation and error handling
+
+### Presentation Layer
+
+#### Authentication UI Components
+- AuthScreen: Main authentication interface
+  - Social sign-in integration
+  - Form-based authentication
+  - Error handling and loading states
+  - Animated form transitions
+- RegisterForm: User registration interface
+  - Input validation
+  - Language selection
+  - Error feedback
+- SignInForm: Login interface
+  - Credential validation
+  - Password visibility toggle
+  - Error state handling
+- SocialSignInButton: Reusable social auth component
+  - Loading state management
+  - Platform-specific authentication
+
+#### State Management
+- AuthViewModel: Authentication logic and state
+  - Form state management
+  - Social auth integration
+  - Error handling
+  - Navigation control
+- AuthUiState: UI state representation
+  - Loading, Success, Error states
+  - Error type classification
+- AuthFormState: Form input management
+  - Field validation
+  - Error messages
+  - Mode switching
+- Validation: Input validation logic
+  - Email format checking
+  - Password strength validation
+  - Phone number formatting
+
+#### Features
+- Email/password authentication
+- Social authentication (Google, Facebook)
+- User registration
+- Form validation
+- Error handling
+- Loading state management
+- Persistent authentication
+- Deep linking support
+
+## Border Management System
 
 ### Map Feature
 
@@ -143,48 +245,6 @@ States:
 - Custom typography
 - Light/dark theme support
 
-## UI State Management
-
-### Screen States
-1. MapScreenState
-   - Loading
-   - LocationPermissionRequired
-   - Error
-   - Success
-
-2. BorderDetailsState
-   - Loading
-   - Error
-   - Success
-
-### Location State
-- Initial
-- RequiresPermission
-- Success
-- Error
-
-## Features
-
-### Map Functionality
-- Real-time location tracking
-- Border point visualization
-- Geospatial queries
-- Point selection
-- Camera position persistence
-
-### Border Details
-- Detailed information display
-- Facilities overview
-- Traffic type indication
-- Operating hours
-- Status updates
-
-### Location Services
-- Permission management
-- Real-time updates
-- Settings verification
-- Error handling
-
 ## Technical Implementation
 
 ### Architecture Pattern
@@ -193,11 +253,14 @@ States:
 - ViewModel for state management
 - Kotlin Flow for reactive updates
 
-### UI Components
-- Material3 components
-- Custom composables
-- Google Maps Compose
-- Responsive layouts
+### Authentication Implementation
+- Firebase Authentication integration
+- Local data persistence with Room
+- Coroutines for asynchronous operations
+- Social authentication providers
+- Form validation and error handling
+- Token management
+- Secure credential storage
 
 ### Maps Integration
 - Google Maps Compose implementation
@@ -209,8 +272,13 @@ States:
 - ViewModel-based state holders
 - Kotlin Flow for reactive updates
 - Result wrapper for error handling
+- Form state validation
+- Loading state handling
+- Error type classification
 
 ### Navigation
 - Compose Navigation
-- Type-safe routing
+- Authentication-aware routing
 - Deep linking support
+- Screen state preservation
+- Type-safe navigation arguments

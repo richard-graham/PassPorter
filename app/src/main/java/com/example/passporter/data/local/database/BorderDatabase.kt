@@ -7,7 +7,6 @@ import androidx.room.TypeConverters
 import com.example.passporter.data.local.dao.BorderDao
 import com.example.passporter.data.local.entity.BorderPointEntity
 import com.example.passporter.data.local.entity.BorderUpdateEntity
-import java.util.Date
 
 @Database(
     entities = [BorderPointEntity::class, BorderUpdateEntity::class],

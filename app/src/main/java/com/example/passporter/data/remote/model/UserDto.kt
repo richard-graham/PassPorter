@@ -1,0 +1,12 @@
+package com.example.passporter.data.remote.model
+
+data class UserDto(
+    val id: String = "",
+    val email: String = "",
+    val displayName: String = "",
+    val photoUrl: String? = "",
+    val phoneNumber: String? = "",
+    val createdAt: Long = 0L,
+    val preferredLanguage: String = "",
+    val notificationsEnabled: Boolean = false
+)
