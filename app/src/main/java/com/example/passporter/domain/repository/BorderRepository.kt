@@ -14,4 +14,5 @@ interface BorderRepository {
     fun getBorderUpdates(borderPointId: String): Flow<List<BorderUpdate>>
     suspend fun addBorderUpdate(update: BorderUpdate): ResultUtil<Unit>
     suspend fun subscribeToBorderPoint(userId: String, borderPointId: String): ResultUtil<Unit>
+    suspend fun updateBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit>
 }

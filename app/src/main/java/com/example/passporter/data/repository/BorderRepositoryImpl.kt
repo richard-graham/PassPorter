@@ -122,4 +122,18 @@ class BorderRepositoryImpl @Inject constructor(
                 ResultUtil.Error(e)
             }
         }
+
+    override suspend fun updateBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> {
+        return try {
+            // Update in Firestore
+            firestoreService.updateBorderPoint(borderPointMapper.toDto(borderPoint))
+
+            // Update local cache
+            borderDao.updateBorderPoint(borderPointMapper.toEntity(borderPoint))
+
+            ResultUtil.Success(Unit)
+        } catch (e: Exception) {
+            ResultUtil.Error(e)
+        }
+    }
 }

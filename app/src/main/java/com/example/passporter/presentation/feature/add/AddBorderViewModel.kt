@@ -9,6 +9,9 @@ import com.example.passporter.domain.entity.BorderStatus
 import com.example.passporter.domain.entity.Facilities
 import com.example.passporter.domain.entity.OperatingHours
 import com.example.passporter.domain.usecase.border.AddBorderPointUseCase
+import com.example.passporter.domain.usecase.border.GetBorderPointDetailsUseCase
+import com.example.passporter.domain.usecase.border.UpdateBorderPointUseCase
+import com.example.passporter.presentation.util.ResultUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,17 +23,61 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddBorderPointViewModel @Inject constructor(
+    private val updateBorderPointUseCase: UpdateBorderPointUseCase,
+    private val getBorderPointDetailsUseCase: GetBorderPointDetailsUseCase,
     private val addBorderPointUseCase: AddBorderPointUseCase,
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AddBorderPointState>(AddBorderPointState.Input())
     val state: StateFlow<AddBorderPointState> = _state.asStateFlow()
 
-    private val latitude: Double = savedStateHandle.get<Float>("lat")?.toDouble()
-        ?: throw IllegalArgumentException("Latitude is required")
-    private val longitude: Double = savedStateHandle.get<Float>("lng")?.toDouble()
-        ?: throw IllegalArgumentException("Longitude is required")
+    private var latitude: Double = savedStateHandle.get<Float>("lat")?.toDouble() ?: 0.0
+    private var longitude: Double = savedStateHandle.get<Float>("lng")?.toDouble() ?: 0.0
+    private val borderId: String? = savedStateHandle["borderId"]
+    private val isEditing = borderId != null
+
+    init {
+        if (isEditing) {
+            loadExistingBorderPoint()
+        }
+    }
+
+    private fun loadExistingBorderPoint() {
+        viewModelScope.launch {
+            _state.value = AddBorderPointState.Loading
+            borderId?.let { id ->
+                when (val result = getBorderPointDetailsUseCase(id)) {
+                    is ResultUtil.Success -> {
+                        val borderPoint = result.data
+
+                        latitude = borderPoint.latitude
+                        longitude = borderPoint.longitude
+
+                        _state.value = AddBorderPointState.Input(
+                            basicInfo = BasicBorderInfo(
+                                name = borderPoint.name,
+                                nameEnglish = borderPoint.nameEnglish,
+                                countryA = borderPoint.countryA,
+                                countryB = borderPoint.countryB,
+                                description = borderPoint.description,
+                                borderType = borderPoint.borderType,
+                                crossingType = borderPoint.crossingType,
+                                operatingAuthority = borderPoint.operatingAuthority
+                            ),
+                            operatingHours = borderPoint.operatingHours ?: OperatingHours("", ""),
+                            accessibility = borderPoint.accessibility,
+                            facilities = borderPoint.facilities
+                        )
+                    }
+
+                    is ResultUtil.Error -> {
+                        _state.value = AddBorderPointState.Error("Failed to load border point")
+                    }
+                }
+            }
+        }
+    }
 
     fun updateBasicInfo(basicInfo: BasicBorderInfo) {
         _state.update { current ->
@@ -76,7 +123,7 @@ class AddBorderPointViewModel @Inject constructor(
             _state.value = AddBorderPointState.Loading
 
             val borderPoint = BorderPoint(
-                id = UUID.randomUUID().toString(),
+                id = borderId ?: UUID.randomUUID().toString(),
                 name = currentState.basicInfo.name,
                 nameEnglish = currentState.basicInfo.nameEnglish,
                 latitude = latitude,
@@ -97,13 +144,23 @@ class AddBorderPointViewModel @Inject constructor(
                 facilities = currentState.facilities
             )
 
-            addBorderPointUseCase(borderPoint)
-                .onSuccess {
+            val result = if (isEditing) {
+                updateBorderPointUseCase(borderPoint)
+            } else {
+                addBorderPointUseCase(borderPoint)
+            }
+
+            when (result) {
+                is ResultUtil.Success<*> -> {
                     _state.value = AddBorderPointState.Input(additionComplete = true)
                 }
-                .onFailure { error ->
-                    _state.value = AddBorderPointState.Error(error.message ?: "Unknown error occurred")
+
+                is ResultUtil.Error -> {
+                    _state.value = AddBorderPointState.Error(
+                        result.exception.message ?: "Unknown error occurred"
+                    )
                 }
+            }
         }
     }
 }

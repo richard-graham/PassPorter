@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.passporter.data.local.entity.BorderPointEntity
 import com.example.passporter.data.local.entity.BorderUpdateEntity
 import kotlinx.coroutines.flow.Flow
@@ -36,4 +37,7 @@ interface BorderDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBorderUpdate(update: BorderUpdateEntity)
+
+    @Update
+    suspend fun updateBorderPoint(borderPoint: BorderPointEntity)
 }

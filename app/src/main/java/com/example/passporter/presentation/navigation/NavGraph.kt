@@ -18,6 +18,9 @@ sealed class Screen(val route: String) {
         fun createRoute(borderId: String) = "border_details/$borderId"
     }
     object Auth : Screen("auth")
+    object EditBorderPoint : Screen("edit/{borderId}") {
+        fun createRoute(borderId: String) = "edit/$borderId"
+    }
 }
 
 @Composable
@@ -49,7 +52,8 @@ fun NavGraph(
             )
         ) {
             BorderDetailsScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                navController = navController
             )
         }
 
@@ -72,6 +76,15 @@ fun NavGraph(
                         popUpTo(Screen.Auth.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(
+            route = Screen.EditBorderPoint.route,
+            arguments = listOf(navArgument("borderId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            AddBorderPointScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

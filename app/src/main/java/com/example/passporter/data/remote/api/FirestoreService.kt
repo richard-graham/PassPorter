@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 
 class FirestoreService @Inject constructor() {
@@ -74,11 +77,27 @@ class FirestoreService @Inject constructor() {
     suspend fun subscribeToBorderPoint(userId: String, borderPointId: String) {
         subscriptionsCollection
             .document("${userId}_${borderPointId}")
-            .set(mapOf(
-                "userId" to userId,
-                "borderPointId" to borderPointId,
-                "timestamp" to System.currentTimeMillis()
-            ))
+            .set(
+                mapOf(
+                    "userId" to userId,
+                    "borderPointId" to borderPointId,
+                    "timestamp" to System.currentTimeMillis()
+                )
+            )
             .await()
+    }
+
+    suspend fun updateBorderPoint(borderPointDto: BorderPointDto) {
+        return suspendCoroutine { continuation ->
+            borderPointsCollection
+                .document(borderPointDto.id)
+                .set(borderPointDto)
+                .addOnSuccessListener {
+                    continuation.resume(Unit)
+                }
+                .addOnFailureListener { exception ->
+                    continuation.resumeWithException(exception)
+                }
+        }
     }
 }
