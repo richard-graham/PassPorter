@@ -31,8 +31,6 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.passporter.presentation.feature.auth.AuthFormState
 
@@ -41,8 +39,7 @@ fun RegisterForm(
     formState: AuthFormState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onPhoneNumberChange: (String) -> Unit,
-    onRegister: (email: String, password: String, name: String, phone: String, language: String) -> Unit,
+    onRegister: (email: String, password: String, name: String, language: String) -> Unit,
     onNavigateToSignIn: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
@@ -102,20 +99,6 @@ fun RegisterForm(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
-            value = formState.phoneNumber,
-            onValueChange = { onPhoneNumberChange(it) },
-            label = { Text("Phone (optional)") },
-            isError = formState.phoneNumberError != null,
-            supportingText = formState.phoneNumberError?.let { { Text(it) } },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Phone
-            ),
-            enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
         LanguageDropdown(
             value = language,
             onValueChange = { language = it },
@@ -130,7 +113,6 @@ fun RegisterForm(
                     formState.email,
                     formState.password,
                     name,
-                    formState.phoneNumber,
                     language
                 )
             },

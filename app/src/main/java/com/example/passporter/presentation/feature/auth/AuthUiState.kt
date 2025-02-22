@@ -19,3 +19,10 @@ enum class AuthErrorType {
     VALIDATION_ERROR,
     UNKNOWN
 }
+
+sealed class ResetPasswordState {
+    data object Initial : ResetPasswordState()
+    data object Loading : ResetPasswordState()
+    data object Success : ResetPasswordState()
+    data class Error(val message: String) : ResetPasswordState()
+}

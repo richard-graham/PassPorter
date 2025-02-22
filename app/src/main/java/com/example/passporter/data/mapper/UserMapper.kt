@@ -12,7 +12,6 @@ class UserMapper @Inject constructor() {
             email = dto.email,
             displayName = dto.displayName,
             photoUrl = dto.photoUrl,
-            phoneNumber = dto.phoneNumber,
             createdAt = dto.createdAt,
             preferredLanguage = dto.preferredLanguage,
             notificationsEnabled = dto.notificationsEnabled
@@ -25,7 +24,6 @@ class UserMapper @Inject constructor() {
             email = entity.email,
             displayName = entity.displayName,
             photoUrl = entity.photoUrl,
-            phoneNumber = entity.phoneNumber,
             createdAt = entity.createdAt,
             preferredLanguage = entity.preferredLanguage,
             notificationsEnabled = entity.notificationsEnabled
@@ -38,7 +36,6 @@ class UserMapper @Inject constructor() {
             email = domain.email,
             displayName = domain.displayName,
             photoUrl = domain.photoUrl,
-            phoneNumber = domain.phoneNumber,
             createdAt = domain.createdAt,
             preferredLanguage = domain.preferredLanguage,
             notificationsEnabled = domain.notificationsEnabled,

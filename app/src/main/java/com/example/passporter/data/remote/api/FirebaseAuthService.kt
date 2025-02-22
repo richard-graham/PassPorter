@@ -2,9 +2,11 @@ package com.example.passporter.data.remote.api
 
 import com.example.passporter.data.remote.model.UserDto
 import com.example.passporter.domain.error.AuthError
-import com.google.firebase.auth.FacebookAuthProvider
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -25,59 +27,10 @@ class FirebaseAuthService @Inject constructor(
             mapToAuthError(e)
         }
 
-    override suspend fun signInWithGoogle(idToken: String): Result<UserDto> =
-        try {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val result = auth.signInWithCredential(credential).await()
-
-            result.user?.let { firebaseUser ->
-                // Check if this is a new user
-                if (result.additionalUserInfo?.isNewUser == true) {
-                    // Create user data in Firestore
-                    createUserData(
-                        userId = firebaseUser.uid,
-                        email = firebaseUser.email ?: "",
-                        displayName = firebaseUser.displayName ?: "",
-                        phoneNumber = firebaseUser.phoneNumber,
-                        preferredLanguage = "en" // Default to English for social sign-in
-                    )
-                } else {
-                    getUserData(firebaseUser.uid)
-                }
-            } ?: Result.failure(AuthError.InvalidCredentials)
-        } catch (e: Exception) {
-            mapToAuthError(e)
-        }
-
-    override suspend fun signInWithFacebook(accessToken: String): Result<UserDto> =
-        try {
-            val credential = FacebookAuthProvider.getCredential(accessToken)
-            val result = auth.signInWithCredential(credential).await()
-
-            result.user?.let { firebaseUser ->
-                // Check if this is a new user
-                if (result.additionalUserInfo?.isNewUser == true) {
-                    // Create user data in Firestore
-                    createUserData(
-                        userId = firebaseUser.uid,
-                        email = firebaseUser.email ?: "",
-                        displayName = firebaseUser.displayName ?: "",
-                        phoneNumber = firebaseUser.phoneNumber,
-                        preferredLanguage = "en" // Default to English for social sign-in
-                    )
-                } else {
-                    getUserData(firebaseUser.uid)
-                }
-            } ?: Result.failure(AuthError.InvalidCredentials)
-        } catch (e: Exception) {
-            mapToAuthError(e)
-        }
-
     override suspend fun registerWithEmail(
         email: String,
         password: String,
         displayName: String,
-        phoneNumber: String?,
         preferredLanguage: String
     ): Result<UserDto> =
         try {
@@ -95,7 +48,6 @@ class FirebaseAuthService @Inject constructor(
                     userId = firebaseUser.uid,
                     email = email,
                     displayName = displayName,
-                    phoneNumber = phoneNumber,
                     preferredLanguage = preferredLanguage
                 )
             } ?: Result.failure(AuthError.InvalidCredentials)
@@ -103,13 +55,20 @@ class FirebaseAuthService @Inject constructor(
             mapToAuthError(e)
         }
 
-    override suspend fun resetPassword(email: String): Result<Unit> =
-        try {
+    override suspend fun resetPassword(email: String): Result<Unit> {
+        return try {
+            val users = auth.fetchSignInMethodsForEmail(email).await()
+
+            if (users.signInMethods?.isEmpty() != false) {
+                return Result.failure(AuthError.UserNotFound)
+            }
+
             auth.sendPasswordResetEmail(email).await()
             Result.success(Unit)
         } catch (e: Exception) {
             mapToAuthError(e)
         }
+    }
 
     override suspend fun signOut() {
         auth.signOut()
@@ -119,7 +78,6 @@ class FirebaseAuthService @Inject constructor(
         userId: String,
         email: String,
         displayName: String,
-        phoneNumber: String?,
         preferredLanguage: String
     ): Result<UserDto> {
         val userData = UserDto(
@@ -127,7 +85,6 @@ class FirebaseAuthService @Inject constructor(
             email = email,
             displayName = displayName,
             photoUrl = auth.currentUser?.photoUrl?.toString(),
-            phoneNumber = phoneNumber ?: "",
             createdAt = System.currentTimeMillis(),
             preferredLanguage = preferredLanguage,
             notificationsEnabled = true
@@ -161,7 +118,6 @@ class FirebaseAuthService @Inject constructor(
                         userId = firebaseUser.uid,
                         email = firebaseUser.email ?: "",
                         displayName = firebaseUser.displayName ?: "",
-                        phoneNumber = firebaseUser.phoneNumber,
                         preferredLanguage = "en"
                     )
                 } ?: Result.failure(AuthError.InvalidCredentials)
@@ -171,13 +127,16 @@ class FirebaseAuthService @Inject constructor(
         }
 
     private fun mapToAuthError(e: Exception): Result<Nothing> = when (e) {
-        is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException ->
-            Result.failure(AuthError.InvalidCredentials)
-        is com.google.firebase.auth.FirebaseAuthInvalidUserException ->
-            Result.failure(AuthError.InvalidCredentials)
-        is com.google.firebase.auth.FirebaseAuthUserCollisionException ->
+        is FirebaseAuthInvalidCredentialsException -> when {
+            e.message?.contains("email", ignoreCase = true) == true ->
+                Result.failure(AuthError.InvalidEmail)
+            else -> Result.failure(AuthError.InvalidCredentials)
+        }
+        is FirebaseAuthInvalidUserException ->
+            Result.failure(AuthError.UserNotFound)
+        is FirebaseAuthUserCollisionException ->
             Result.failure(AuthError.UserCollision)
-        is com.google.firebase.FirebaseNetworkException ->
+        is FirebaseNetworkException ->
             Result.failure(AuthError.NetworkError)
         else -> Result.failure(AuthError.UnknownError(e))
     }

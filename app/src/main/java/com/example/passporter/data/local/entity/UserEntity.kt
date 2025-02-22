@@ -9,7 +9,6 @@ data class UserEntity(
     val email: String,
     val displayName: String,
     val photoUrl: String?,
-    val phoneNumber: String?,
     val createdAt: Long,
     val preferredLanguage: String,
     val notificationsEnabled: Boolean,

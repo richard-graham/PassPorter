@@ -3,7 +3,6 @@ package com.example.passporter.data.repository
 import com.example.passporter.data.local.dao.AuthDao
 import com.example.passporter.data.mapper.UserMapper
 import com.example.passporter.data.remote.api.AuthService
-import com.example.passporter.data.remote.model.UserDto
 import com.example.passporter.di.DispatcherProvider
 import com.example.passporter.domain.entity.User
 import com.example.passporter.domain.repository.AuthRepository
@@ -37,37 +36,10 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun signInWithGoogle(idToken: String): Result<User> =
-        withContext(dispatcherProvider.io) {
-            try {
-                authService.signInWithGoogle(idToken)
-                    .map { userMapper.mapToDomain(it) }
-                    .onSuccess { user ->
-                        authDao.insertUser(userMapper.mapToEntity(user))
-                    }
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-
-    override suspend fun signInWithFacebook(accessToken: String): Result<User> =
-        withContext(dispatcherProvider.io) {
-            try {
-                authService.signInWithFacebook(accessToken)
-                    .map { userMapper.mapToDomain(it) }
-                    .onSuccess { user ->
-                        authDao.insertUser(userMapper.mapToEntity(user))
-                    }
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-
     override suspend fun registerWithEmail(
         email: String,
         password: String,
         displayName: String,
-        phoneNumber: String?,
         preferredLanguage: String
     ): Result<User> =
         withContext(dispatcherProvider.io) {
@@ -76,7 +48,6 @@ class AuthRepositoryImpl @Inject constructor(
                     email = email,
                     password = password,
                     displayName = displayName,
-                    phoneNumber = phoneNumber,
                     preferredLanguage = preferredLanguage
                 ).map { userMapper.mapToDomain(it) }
                     .onSuccess { user ->

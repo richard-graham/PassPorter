@@ -7,8 +7,6 @@ data class AuthFormState(
     val passwordError: String? = null,
     val displayName: String = "",
     val displayNameError: String? = null,
-    val phoneNumber: String = "",
-    val phoneNumberError: String? = null,
     val preferredLanguage: String = "",
     val preferredLanguageError: String? = null,
     val isLoading: Boolean = false,
@@ -20,7 +18,7 @@ data class AuthFormState(
                 email.isNotBlank() && password.isNotBlank() &&
                         displayName.isNotBlank() && preferredLanguage.isNotBlank() &&
                         emailError == null && passwordError == null &&
-                        displayNameError == null && phoneNumberError == null &&
+                        displayNameError == null &&
                         preferredLanguageError == null
             }
             else -> {

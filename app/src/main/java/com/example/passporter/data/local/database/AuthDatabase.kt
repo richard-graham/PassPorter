@@ -9,7 +9,7 @@ import com.example.passporter.data.local.entity.UserEntity
     entities = [
         UserEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AuthDatabase : RoomDatabase() {

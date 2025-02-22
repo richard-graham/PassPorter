@@ -1,17 +1,25 @@
 package com.example.passporter.domain.error
 
 sealed class AuthError : Exception() {
-    data object InvalidCredentials : AuthError() {
+    object InvalidCredentials : AuthError() {
         private fun readResolve(): Any = InvalidCredentials
     }
 
-    data object NetworkError : AuthError() {
+    object NetworkError : AuthError() {
         private fun readResolve(): Any = NetworkError
     }
 
-    data object UserCollision : AuthError() {
+    object UserCollision : AuthError() {
         private fun readResolve(): Any = UserCollision
     }
 
-    data class UnknownError(val originalError: Exception) : AuthError()
+    object UserNotFound : AuthError() {
+        private fun readResolve(): Any = UserNotFound
+    }
+
+    object InvalidEmail : AuthError() {
+        private fun readResolve(): Any = InvalidEmail
+    }
+
+    class UnknownError(val originalError: Exception) : AuthError()
 }

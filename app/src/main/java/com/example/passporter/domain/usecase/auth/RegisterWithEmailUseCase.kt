@@ -11,7 +11,6 @@ class RegisterWithEmailUseCase @Inject constructor(
         email: String,
         password: String,
         displayName: String,
-        phoneNumber: String,
         preferredLanguage: String
     ): Result<User> {
         // Validation
@@ -27,12 +26,6 @@ class RegisterWithEmailUseCase @Inject constructor(
             return Result.failure(IllegalArgumentException("Display name must be at least 2 characters long"))
         }
 
-        phoneNumber.let {
-            if (!isValidPhoneNumber(it) && it.isNotEmpty()) {
-                return Result.failure(IllegalArgumentException("Invalid phone number format"))
-            }
-        }
-
         if (preferredLanguage.isBlank()) {
             return Result.failure(IllegalArgumentException("Preferred language must be selected"))
         }
@@ -41,7 +34,6 @@ class RegisterWithEmailUseCase @Inject constructor(
             email = email,
             password = password,
             displayName = displayName,
-            phoneNumber = phoneNumber,
             preferredLanguage = preferredLanguage
         )
     }
@@ -53,9 +45,5 @@ class RegisterWithEmailUseCase @Inject constructor(
     private fun isValidPassword(password: String): Boolean {
         val passwordPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$"
         return password.matches(passwordPattern.toRegex())
-    }
-
-    private fun isValidPhoneNumber(phoneNumber: String): Boolean {
-        return android.util.Patterns.PHONE.matcher(phoneNumber).matches()
     }
 }

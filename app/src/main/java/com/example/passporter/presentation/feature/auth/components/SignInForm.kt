@@ -12,9 +12,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,17 +29,37 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.passporter.presentation.feature.auth.ResetPasswordState
 
 @Composable
 fun SignInForm(
     onSignIn: (String, String) -> Unit,
     onNavigateToRegister: () -> Unit,
+    onForgotPassword: (String) -> Unit,
     modifier: Modifier = Modifier,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    resetPasswordState: ResetPasswordState = ResetPasswordState.Initial,
+    onResetPasswordStateHandled: () -> Unit = {}
 ) {
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(resetPasswordState) {
+        when (resetPasswordState) {
+            is ResetPasswordState.Success -> {
+                showForgotPasswordDialog = false
+                snackbarHostState.showSnackbar(
+                    "Password reset link sent to your email",
+                    duration = SnackbarDuration.Short
+                )
+                onResetPasswordStateHandled()
+            }
+            else -> Unit
+        }
+    }
 
     Column(
         modifier = modifier
@@ -73,7 +97,7 @@ fun SignInForm(
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(
-                onClick = { /* TODO: Implement forgot password */ },
+                onClick = { showForgotPasswordDialog = true },
                 enabled = !isLoading
             ) {
                 Text("Forgot Password?")
@@ -101,5 +125,22 @@ fun SignInForm(
         ) {
             Text("Don't have an account? Sign up")
         }
+
+        if (showForgotPasswordDialog) {
+            ForgotPasswordDialog(
+                onDismiss = {
+                    showForgotPasswordDialog = false
+                    onResetPasswordStateHandled()
+                },
+                onSubmit = onForgotPassword,
+                isLoading = resetPasswordState is ResetPasswordState.Loading,
+                errorMessage = (resetPasswordState as? ResetPasswordState.Error)?.message
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

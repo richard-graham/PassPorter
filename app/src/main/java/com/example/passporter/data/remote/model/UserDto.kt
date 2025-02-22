@@ -5,7 +5,6 @@ data class UserDto(
     val email: String = "",
     val displayName: String = "",
     val photoUrl: String? = "",
-    val phoneNumber: String? = "",
     val createdAt: Long = 0L,
     val preferredLanguage: String = "",
     val notificationsEnabled: Boolean = false

@@ -4,9 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.passporter.domain.error.AuthError
 import com.example.passporter.domain.usecase.auth.RegisterWithEmailUseCase
+import com.example.passporter.domain.usecase.auth.ResetPasswordUseCase
 import com.example.passporter.domain.usecase.auth.SignInWithEmailUseCase
-import com.example.passporter.domain.usecase.auth.SignInWithFacebookUseCase
-import com.example.passporter.domain.usecase.auth.SignInWithGoogleUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,15 +16,17 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val signInWithEmailUseCase: SignInWithEmailUseCase,
-    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
-    private val signInWithFacebookUseCase: SignInWithFacebookUseCase,
-    private val registerWithEmailUseCase: RegisterWithEmailUseCase
+    private val registerWithEmailUseCase: RegisterWithEmailUseCase,
+    private val resetPasswordUseCase: ResetPasswordUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Initial)
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     private val _formState = MutableStateFlow(AuthFormState())
     val formState: StateFlow<AuthFormState> = _formState.asStateFlow()
+
+    private val _resetPasswordState = MutableStateFlow<ResetPasswordState>(ResetPasswordState.Initial)
+    val resetPasswordState: StateFlow<ResetPasswordState> = _resetPasswordState.asStateFlow()
 
     fun onEmailSignIn(email: String, password: String) {
         viewModelScope.launch {
@@ -41,39 +42,10 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun onGoogleSignIn(idToken: String) {
-        viewModelScope.launch {
-            _uiState.value = AuthUiState.Loading
-            signInWithGoogleUseCase(idToken)
-                .onSuccess { _uiState.value = AuthUiState.Success(it) }
-                .onFailure { error ->
-                    _uiState.value = AuthUiState.Error(
-                        message = error.message ?: "Google sign in failed",
-                        errorType = mapErrorType(error)
-                    )
-                }
-        }
-    }
-
-    fun onFacebookSignIn(accessToken: String) {
-        viewModelScope.launch {
-            _uiState.value = AuthUiState.Loading
-            signInWithFacebookUseCase(accessToken)
-                .onSuccess { _uiState.value = AuthUiState.Success(it) }
-                .onFailure { error ->
-                    _uiState.value = AuthUiState.Error(
-                        message = error.message ?: "Facebook sign in failed",
-                        errorType = mapErrorType(error)
-                    )
-                }
-        }
-    }
-
     fun onRegister(
         email: String,
         password: String,
         displayName: String,
-        phoneNumber: String,
         preferredLanguage: String
     ) {
         viewModelScope.launch {
@@ -82,7 +54,6 @@ class AuthViewModel @Inject constructor(
                 email = email,
                 password = password,
                 displayName = displayName,
-                phoneNumber = phoneNumber,
                 preferredLanguage = preferredLanguage
             ).onSuccess {
                 _formState.value = formState.value.copy(isLoading = false)
@@ -124,18 +95,28 @@ class AuthViewModel @Inject constructor(
         updateFormState { copy(password = password, passwordError = error) }
     }
 
-    fun updatePhoneNumber(number: String) {
-        updateFormState { copy(phoneNumber = number) }
+    fun onResetPassword(email: String) {
+        viewModelScope.launch {
+            _resetPasswordState.value = ResetPasswordState.Loading
+            resetPasswordUseCase(email)
+                .onSuccess {
+                    _resetPasswordState.value = ResetPasswordState.Success
+                }
+                .onFailure { error ->
+                    val message = when (error) {
+                        is AuthError.UserNotFound ->
+                            "No account found with this email"
+                        is AuthError.NetworkError ->
+                            "Network error. Please check your connection and try again."
+                        else -> "Failed to send reset email. Please try again."
+                    }
+                    _resetPasswordState.value = ResetPasswordState.Error(message)
+                }
+        }
     }
 
-    fun validatePhoneNumber(phone: String) {
-        val error = when {
-            phone.isNotBlank() && !android.util.Patterns.PHONE.matcher(phone).matches() ->
-                "Invalid phone number format"
-
-            else -> null
-        }
-        updateFormState { copy(phoneNumber = phone, phoneNumberError = error) }
+    fun resetPasswordState() {
+        _resetPasswordState.value = ResetPasswordState.Initial
     }
 
     private fun mapErrorType(error: Throwable): AuthErrorType = when (error) {
