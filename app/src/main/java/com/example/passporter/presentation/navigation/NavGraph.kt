@@ -51,6 +51,16 @@ fun NavGraph(
                 navArgument("borderId") { type = NavType.StringType }
             )
         ) {
+            val shouldRefresh = navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.get<Boolean>("shouldRefresh") ?: false
+
+            if (shouldRefresh) {
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("shouldRefresh", false)
+            }
+
             BorderDetailsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 navController = navController
@@ -65,7 +75,13 @@ fun NavGraph(
             )
         ) {
             AddBorderPointScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onUpdateSuccess = {
+                    // This will ensure the details screen refreshes its data
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("shouldRefresh", true)
+                }
             )
         }
 

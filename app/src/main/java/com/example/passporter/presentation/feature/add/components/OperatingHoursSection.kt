@@ -21,12 +21,6 @@ fun OperatingHoursSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "Operating Hours",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
         OutlinedTextField(
             value = operatingHours.regular ?: "",
             onValueChange = { onOperatingHoursChange(operatingHours.copy(regular = it.ifBlank { null })) },

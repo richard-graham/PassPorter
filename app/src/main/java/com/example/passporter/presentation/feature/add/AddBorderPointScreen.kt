@@ -29,7 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,16 +46,18 @@ import com.example.passporter.presentation.feature.add.components.OperatingHours
 @Composable
 fun AddBorderPointScreen(
     viewModel: AddBorderPointViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onUpdateSuccess: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-    var currentSection by remember { mutableStateOf(0) }
+    var currentSection by remember { mutableIntStateOf(0) }
     val sections = listOf("Basic Info", "Operating Hours", "Accessibility", "Facilities")
 
     LaunchedEffect(state.additionComplete) {
         if (state.additionComplete) {
-            Toast.makeText(context, "Border point added successfully", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Border point saved successfully", Toast.LENGTH_SHORT).show()
+            onUpdateSuccess()
             onNavigateBack()
         }
     }

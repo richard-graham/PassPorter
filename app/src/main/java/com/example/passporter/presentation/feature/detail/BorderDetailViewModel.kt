@@ -27,6 +27,10 @@ class BorderDetailsViewModel @Inject constructor(
         loadBorderPoint()
     }
 
+    fun refresh() {
+        loadBorderPoint()
+    }
+
     private fun loadBorderPoint() {
         viewModelScope.launch {
             _state.value = BorderDetailsState.Loading
