@@ -18,8 +18,10 @@ sealed class Screen(val route: String) {
         fun createRoute(borderId: String) = "border_details/$borderId"
     }
     object Auth : Screen("auth")
-    object EditBorderPoint : Screen("edit/{borderId}") {
-        fun createRoute(borderId: String) = "edit/$borderId"
+    object EditBorderPoint : Screen("edit_border_point/{borderId}?initialSection={initialSection}") {
+        fun createRouteWithSection(borderId: String, initialSection: Int): String {
+            return "edit_border_point/$borderId?initialSection=$initialSection"
+        }
     }
 }
 
@@ -97,9 +99,19 @@ fun NavGraph(
 
         composable(
             route = Screen.EditBorderPoint.route,
-            arguments = listOf(navArgument("borderId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("borderId") { type = NavType.StringType },
+                navArgument("initialSection") {
+                    type = NavType.IntType
+                    defaultValue = 0
+                    nullable = false
+                }
+            )
         ) { backStackEntry ->
+            val initialSection = backStackEntry.arguments?.getInt("initialSection") ?: 0
+
             AddBorderPointScreen(
+                initialSection = initialSection,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

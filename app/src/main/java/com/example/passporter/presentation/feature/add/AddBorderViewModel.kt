@@ -38,14 +38,22 @@ class AddBorderPointViewModel @Inject constructor(
     private val isEditing = borderId != null
 
     init {
-        if (savedStateHandle.contains("lat") && savedStateHandle.contains("lng")) {
-            latitude = savedStateHandle.get<Float>("lat")?.toDouble() ?: 0.0
-            longitude = savedStateHandle.get<Float>("lng")?.toDouble() ?: 0.0
-        }
+        // Initialize location from savedStateHandle if available
+        val initialLat = savedStateHandle.get<Float>("lat")?.toDouble() ?: 0.0
+        val initialLng = savedStateHandle.get<Float>("lng")?.toDouble() ?: 0.0
 
         if (isEditing) {
+            // For editing: load entire border point from database
             loadExistingBorderPoint()
+        } else if (initialLat != 0.0 && initialLng != 0.0) {
+            // For new border point with initial location: update state with location
+            _state.update { current ->
+                if (current is AddBorderPointState.Input) {
+                    current.copy(latitude = initialLat, longitude = initialLng)
+                } else current
+            }
         }
+        // Otherwise, let the user set the location in the UI
     }
 
     private fun loadExistingBorderPoint() {
@@ -72,7 +80,9 @@ class AddBorderPointViewModel @Inject constructor(
                             ),
                             operatingHours = borderPoint.operatingHours ?: OperatingHours("", ""),
                             accessibility = borderPoint.accessibility,
-                            facilities = borderPoint.facilities
+                            facilities = borderPoint.facilities,
+                            latitude = borderPoint.latitude,
+                            longitude = borderPoint.longitude
                         )
                     }
 
@@ -116,6 +126,14 @@ class AddBorderPointViewModel @Inject constructor(
         }
     }
 
+    fun updateLocation(latitude: Double, longitude: Double) {
+        _state.update { current ->
+            if (current is AddBorderPointState.Input) {
+                current.copy(latitude = latitude, longitude = longitude)
+            } else current
+        }
+    }
+
     fun submitBorderPoint() {
         val currentState = _state.value as? AddBorderPointState.Input ?: return
 
@@ -137,8 +155,8 @@ class AddBorderPointViewModel @Inject constructor(
                 id = borderId ?: UUID.randomUUID().toString(),
                 name = currentState.basicInfo.name,
                 nameEnglish = currentState.basicInfo.nameEnglish,
-                latitude = latitude,
-                longitude = longitude,
+                latitude = currentState.latitude,
+                longitude = currentState.longitude,
                 countryA = currentState.basicInfo.countryA,
                 countryB = currentState.basicInfo.countryB,
                 status = BorderStatus.OPEN,

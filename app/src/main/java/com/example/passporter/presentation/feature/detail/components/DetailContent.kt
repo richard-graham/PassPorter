@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -61,7 +63,7 @@ import java.util.Locale
 fun DetailContent(
     borderPoint: BorderPoint,
     onNavigateUp: () -> Unit,
-    onEditClick: (String) -> Unit,
+    onEditClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -75,7 +77,7 @@ fun DetailContent(
                 },
                 actions = {
                     IconButton(
-                        onClick = { onEditClick(borderPoint.id) }
+                        onClick = { onEditClick(0) }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -128,6 +130,28 @@ fun DetailContent(
                         icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
                         title = borderPoint.name
                     )
+                }
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(8.dp)
+                ) {
+                    TextButton(
+                        onClick = { onEditClick(1) },
+                        modifier = Modifier.padding(4.dp),
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit location",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Edit Location")
+                    }
                 }
             }
 

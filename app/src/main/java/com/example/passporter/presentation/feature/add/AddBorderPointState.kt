@@ -20,10 +20,13 @@ sealed class AddBorderPointState {
             RoadConditions(RoadCondition(null, null), RoadCondition(null, null))
         ),
         val facilities: Facilities = Facilities(),
+        val latitude: Double = 0.0,
+        val longitude: Double = 0.0,
         override val additionComplete: Boolean = false
     ) : AddBorderPointState() {
         fun isValid(): Boolean = with(basicInfo) {
-            name.isNotBlank() && countryA.isNotBlank() && countryB.isNotBlank()
+            name.isNotBlank() && countryA.isNotBlank() && countryB.isNotBlank() &&
+                    latitude != 0.0 && longitude != 0.0
         }
     }
 }

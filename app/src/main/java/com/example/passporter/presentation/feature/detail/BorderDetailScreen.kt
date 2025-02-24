@@ -1,5 +1,7 @@
 package com.example.passporter.presentation.feature.detail
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import com.example.passporter.presentation.feature.map.BorderDetailsState
 import com.example.passporter.presentation.feature.map.BorderDetailsViewModel
 import com.example.passporter.presentation.navigation.Screen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BorderDetailsScreen(
     onNavigateBack: () -> Unit,
@@ -74,8 +77,8 @@ fun BorderDetailsScreen(
                 DetailContent(
                     borderPoint = borderPoint,
                     onNavigateUp = onNavigateBack,
-                    onEditClick = {
-                        navController.navigate(Screen.EditBorderPoint.createRoute(borderPoint.id))
+                    onEditClick = { section ->
+                        navController.navigate(Screen.EditBorderPoint.createRouteWithSection(borderPoint.id, section))
                     }
                 )
             }

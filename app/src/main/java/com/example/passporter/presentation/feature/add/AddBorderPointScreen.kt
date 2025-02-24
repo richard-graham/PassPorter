@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +43,7 @@ import com.example.passporter.presentation.feature.add.components.AccessibilityS
 import com.example.passporter.presentation.feature.add.components.BasicInfoSection
 import com.example.passporter.presentation.feature.add.components.EnhancedOperatingHoursSelector
 import com.example.passporter.presentation.feature.add.components.FacilitiesSection
+import com.example.passporter.presentation.feature.add.components.LocationEditSection
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,12 +51,14 @@ import com.example.passporter.presentation.feature.add.components.FacilitiesSect
 fun AddBorderPointScreen(
     viewModel: AddBorderPointViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onUpdateSuccess: () -> Unit = {}
+    onUpdateSuccess: () -> Unit = {},
+    initialSection: Int = 0
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-    var currentSection by remember { mutableIntStateOf(0) }
-    val sections = listOf("Basic Info", "Operating Hours", "Accessibility", "Facilities")
+    var currentSection by remember { mutableIntStateOf(initialSection) }
+    val sections =
+        listOf("Basic Info", "Location", "Operating Hours", "Accessibility", "Facilities")
 
     LaunchedEffect(state.additionComplete) {
         if (state.additionComplete) {
@@ -72,7 +74,8 @@ fun AddBorderPointScreen(
                 title = {
                     Text(
                         text = if (state is AddBorderPointState.Input &&
-                            (state as AddBorderPointState.Input).basicInfo.name.isNotEmpty()) {
+                            (state as AddBorderPointState.Input).basicInfo.name.isNotEmpty()
+                        ) {
                             "Editing ${(state as AddBorderPointState.Input).basicInfo.name}"
                         } else {
                             "Add New Border Point"
@@ -158,7 +161,17 @@ fun AddBorderPointScreen(
                                 }
                             }
 
-                            1 -> {
+                            1 -> item {
+                                FormSection(title = "Location") {
+                                    LocationEditSection(
+                                        latitude = inputState.latitude,
+                                        longitude = inputState.longitude,
+                                        onLocationChange = viewModel::updateLocation
+                                    )
+                                }
+                            }
+
+                            2 -> {
                                 item {
                                     FormSection(title = "Operating Hours") {
                                         // Just the section header
@@ -175,7 +188,7 @@ fun AddBorderPointScreen(
                                 }
                             }
 
-                            2 -> item {
+                            3 -> item {
                                 FormSection(title = "Accessibility") {
                                     AccessibilitySection(
                                         accessibility = inputState.accessibility,
@@ -184,7 +197,7 @@ fun AddBorderPointScreen(
                                 }
                             }
 
-                            3 -> item {
+                            4 -> item {
                                 FormSection(title = "Facilities") {
                                     FacilitiesSection(
                                         facilities = inputState.facilities,
