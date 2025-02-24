@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,13 +69,33 @@ fun AddBorderPointScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add New Border Point") },
+                title = {
+                    Text(
+                        text = if (state is AddBorderPointState.Input &&
+                            (state as AddBorderPointState.Input).basicInfo.name.isNotEmpty()) {
+                            "Editing ${(state as AddBorderPointState.Input).basicInfo.name}"
+                        } else {
+                            "Add New Border Point"
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Navigate back"
                         )
+                    }
+                },
+                actions = {
+                    if (state is AddBorderPointState.Input) {
+                        val inputState = state as AddBorderPointState.Input
+                        TextButton(
+                            onClick = viewModel::submitBorderPoint,
+                            enabled = inputState.isValid()
+                        ) {
+                            Text("Submit")
+                        }
                     }
                 }
             )
@@ -202,16 +224,6 @@ fun AddBorderPointScreen(
                                             .padding(start = if (currentSection > 0) 8.dp else 0.dp)
                                     ) {
                                         Text("Next")
-                                    }
-                                } else {
-                                    Button(
-                                        onClick = viewModel::submitBorderPoint,
-                                        enabled = inputState.isValid(),
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(start = if (currentSection > 0) 8.dp else 0.dp)
-                                    ) {
-                                        Text("Submit")
                                     }
                                 }
                             }
