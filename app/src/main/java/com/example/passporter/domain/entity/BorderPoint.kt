@@ -1,5 +1,7 @@
 package com.example.passporter.domain.entity
 
+import java.time.LocalDate
+
 data class BorderPoint(
     val id: String,
     val name: String,
@@ -24,7 +26,23 @@ data class BorderPoint(
 
 data class OperatingHours(
     val regular: String?,
-    val covid: String?,
+    val timezone: String = "UTC",
+    val summerHours: SeasonalHours? = null,
+    val winterHours: SeasonalHours? = null,
+    val closurePeriods: List<ClosurePeriod> = emptyList()
+)
+
+data class SeasonalHours(
+    val schedule: String,
+    val startDate: LocalDate,
+    val endDate: LocalDate
+)
+
+data class ClosurePeriod(
+    val startDate: LocalDate,
+    val endDate: LocalDate,
+    val reason: String? = null,
+    val isRecurring: Boolean = false
 )
 
 data class Accessibility(

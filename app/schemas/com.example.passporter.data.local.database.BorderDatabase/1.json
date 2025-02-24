@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6f7b9fb20d38e63cb8a2be64314cbcef",
+    "identityHash": "2527398c6a83624fdf151eef7398ab88",
     "entities": [
       {
         "tableName": "border_points",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `nameEnglish` TEXT, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `countryA` TEXT NOT NULL, `countryB` TEXT NOT NULL, `status` TEXT NOT NULL, `lastUpdate` INTEGER NOT NULL, `createdBy` TEXT NOT NULL, `description` TEXT NOT NULL, `borderType` TEXT, `crossingType` TEXT, `sourceId` TEXT NOT NULL, `dataSource` TEXT NOT NULL, `operatingAuthority` TEXT, `operating_regular` TEXT, `operating_covid` TEXT, `accessibility_traffic_pedestrian` INTEGER, `accessibility_traffic_bicycle` INTEGER, `accessibility_traffic_motorcycle` INTEGER, `accessibility_traffic_car` INTEGER, `accessibility_traffic_rv` INTEGER, `accessibility_traffic_truck` INTEGER, `accessibility_traffic_bus` INTEGER, `accessibility_road_approaching_type` TEXT, `accessibility_road_approaching_condition` TEXT, `accessibility_road_departing_type` TEXT, `accessibility_road_departing_condition` TEXT, `facilities_amenities_restrooms` INTEGER, `facilities_amenities_food` INTEGER, `facilities_amenities_water` INTEGER, `facilities_amenities_shelter` INTEGER, `facilities_amenities_wifi` INTEGER, `facilities_amenities_parking` INTEGER, `facilities_services_dutyFree` INTEGER, `facilities_services_storage` INTEGER, `facilities_services_currency_available` INTEGER, `facilities_services_insurance_available` INTEGER, `facilities_services_insurance_types` TEXT, `facilities_services_telecom_available` INTEGER, `facilities_services_telecom_operators` TEXT, `facilities_services_telecom_hasSimCards` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `nameEnglish` TEXT, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `countryA` TEXT NOT NULL, `countryB` TEXT NOT NULL, `status` TEXT NOT NULL, `lastUpdate` INTEGER NOT NULL, `createdBy` TEXT NOT NULL, `description` TEXT NOT NULL, `borderType` TEXT, `crossingType` TEXT, `sourceId` TEXT NOT NULL, `dataSource` TEXT NOT NULL, `operatingAuthority` TEXT, `operating_regular` TEXT, `accessibility_traffic_pedestrian` INTEGER, `accessibility_traffic_bicycle` INTEGER, `accessibility_traffic_motorcycle` INTEGER, `accessibility_traffic_car` INTEGER, `accessibility_traffic_rv` INTEGER, `accessibility_traffic_truck` INTEGER, `accessibility_traffic_bus` INTEGER, `accessibility_road_approaching_type` TEXT, `accessibility_road_approaching_condition` TEXT, `accessibility_road_departing_type` TEXT, `accessibility_road_departing_condition` TEXT, `facilities_amenities_restrooms` INTEGER, `facilities_amenities_food` INTEGER, `facilities_amenities_water` INTEGER, `facilities_amenities_shelter` INTEGER, `facilities_amenities_wifi` INTEGER, `facilities_amenities_parking` INTEGER, `facilities_services_dutyFree` INTEGER, `facilities_services_storage` INTEGER, `facilities_services_currency_available` INTEGER, `facilities_services_insurance_available` INTEGER, `facilities_services_insurance_types` TEXT, `facilities_services_telecom_available` INTEGER, `facilities_services_telecom_operators` TEXT, `facilities_services_telecom_hasSimCards` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -107,12 +107,6 @@
           {
             "fieldPath": "operatingHours.regular",
             "columnName": "operating_regular",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "operatingHours.covid",
-            "columnName": "operating_covid",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -352,7 +346,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6f7b9fb20d38e63cb8a2be64314cbcef')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2527398c6a83624fdf151eef7398ab88')"
     ]
   }
 }

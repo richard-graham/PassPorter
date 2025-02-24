@@ -30,11 +30,7 @@ data class BorderPointEntity(
     val facilities: FacilitiesEntity
 )
 
-data class OperatingHoursEntity(
-    val regular: String?,
-    val covid: String?
-)
-
+// Existing entity classes remain unchanged
 data class AccessibilityEntity(
     @Embedded(prefix = "traffic_")
     val trafficTypes: TrafficTypesEntity,
@@ -104,4 +100,27 @@ data class TelecomServicesEntity(
     val available: Boolean?,
     val operators: List<String>?,
     val hasSimCards: Boolean?
+)
+
+data class OperatingHoursEntity(
+    val regular: String?,
+    val timezone: String = "UTC",
+    @Embedded(prefix = "summer_")
+    val summerHours: SeasonalHoursEntity? = null,
+    @Embedded(prefix = "winter_")
+    val winterHours: SeasonalHoursEntity? = null,
+    val closurePeriods: List<ClosurePeriodEntity> = emptyList()
+)
+
+data class SeasonalHoursEntity(
+    val schedule: String,
+    val startDate: Long,
+    val endDate: Long
+)
+
+data class ClosurePeriodEntity(
+    val startDate: Long,
+    val endDate: Long,
+    val reason: String?,
+    val isRecurring: Boolean = false
 )

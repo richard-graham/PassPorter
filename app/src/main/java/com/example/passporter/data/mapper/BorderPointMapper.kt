@@ -1,14 +1,18 @@
 package com.example.passporter.data.mapper
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.passporter.data.local.entity.AccessibilityEntity
 import com.example.passporter.data.local.entity.AmenitiesEntity
 import com.example.passporter.data.local.entity.BorderPointEntity
+import com.example.passporter.data.local.entity.ClosurePeriodEntity
 import com.example.passporter.data.local.entity.CurrencyExchangeEntity
 import com.example.passporter.data.local.entity.FacilitiesEntity
 import com.example.passporter.data.local.entity.InsuranceServicesEntity
 import com.example.passporter.data.local.entity.OperatingHoursEntity
 import com.example.passporter.data.local.entity.RoadConditionEntity
 import com.example.passporter.data.local.entity.RoadConditionsEntity
+import com.example.passporter.data.local.entity.SeasonalHoursEntity
 import com.example.passporter.data.local.entity.ServicesEntity
 import com.example.passporter.data.local.entity.TelecomServicesEntity
 import com.example.passporter.data.local.entity.TrafficTypesEntity
@@ -23,9 +27,11 @@ import com.example.passporter.domain.entity.InsuranceServices
 import com.example.passporter.domain.entity.OperatingHours
 import com.example.passporter.domain.entity.RoadCondition
 import com.example.passporter.domain.entity.RoadConditions
+import com.example.passporter.domain.entity.SeasonalHours
 import com.example.passporter.domain.entity.Services
 import com.example.passporter.domain.entity.TelecomServices
 import com.example.passporter.domain.entity.TrafficTypes
+import java.time.LocalDate
 import javax.inject.Inject
 
 class BorderPointMapper @Inject constructor() {
@@ -61,8 +67,7 @@ class BorderPointMapper @Inject constructor() {
             sourceId = dto.sourceId,
             dataSource = dto.dataSource,
             operatingHours = OperatingHours(
-                regular = dto.operatingHours?.regular,
-                covid = dto.operatingHours?.covid19
+                regular = dto.operatingHours?.regular
             ),
             operatingAuthority = dto.operatingAuthority,
             accessibility = Accessibility(
@@ -107,13 +112,15 @@ class BorderPointMapper @Inject constructor() {
                     storage = dto.facilities?.services?.storage,
                     telecommunications = TelecomServices(
                         available = dto.facilities?.services?.telecommunications?.available,
-                        operators = dto.facilities?.services?.telecommunications?.operators ?: emptyList(),
+                        operators = dto.facilities?.services?.telecommunications?.operators
+                            ?: emptyList(),
                         hasSimCards = dto.facilities?.services?.telecommunications?.hasSimCards
                     )
                 )
             )
         )
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toEntity(domain: BorderPoint): BorderPointEntity =
         BorderPointEntity(
             id = domain.id,
@@ -134,7 +141,28 @@ class BorderPointMapper @Inject constructor() {
             operatingHours = domain.operatingHours?.let { hours ->
                 OperatingHoursEntity(
                     regular = hours.regular,
-                    covid = hours.covid
+                    summerHours = hours.summerHours?.let { summer ->
+                        SeasonalHoursEntity(
+                            schedule = summer.schedule,
+                            startDate = summer.startDate.toEpochDay(),
+                            endDate = summer.endDate.toEpochDay()
+                        )
+                    },
+                    winterHours = hours.winterHours?.let { winter ->
+                        SeasonalHoursEntity(
+                            schedule = winter.schedule,
+                            startDate = winter.startDate.toEpochDay(),
+                            endDate = winter.endDate.toEpochDay()
+                        )
+                    },
+                    closurePeriods = hours.closurePeriods.map { period ->
+                        ClosurePeriodEntity(
+                            startDate = period.startDate.toEpochDay(),
+                            endDate = period.endDate.toEpochDay(),
+                            reason = period.reason,
+                            isRecurring = period.isRecurring
+                        )
+                    }
                 )
             },
             operatingAuthority = domain.operatingAuthority,
@@ -209,6 +237,7 @@ class BorderPointMapper @Inject constructor() {
             }
         )
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toDomain(entity: BorderPointEntity): BorderPoint =
         BorderPoint(
             id = entity.id,
@@ -229,7 +258,21 @@ class BorderPointMapper @Inject constructor() {
             operatingHours = entity.operatingHours?.let { hours ->
                 OperatingHours(
                     regular = hours.regular,
-                    covid = hours.covid
+                    timezone = hours.timezone,
+                    summerHours = hours.summerHours?.let {
+                        SeasonalHours(
+                            schedule = it.schedule,
+                            startDate = it.startDate.toLocalDate(),
+                            endDate = it.endDate.toLocalDate()
+                        )
+                    },
+                    winterHours = hours.winterHours?.let {
+                        SeasonalHours(
+                            schedule = it.schedule,
+                            startDate = it.startDate.toLocalDate(),
+                            endDate = it.endDate.toLocalDate()
+                        )
+                    },
                 )
             },
             operatingAuthority = entity.operatingAuthority,
@@ -301,4 +344,10 @@ class BorderPointMapper @Inject constructor() {
                 )
             }
         )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun Long.toLocalDate(): LocalDate {
+    // The value is already in epoch days, not milliseconds
+    return LocalDate.ofEpochDay(this)
 }

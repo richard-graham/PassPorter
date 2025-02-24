@@ -14,7 +14,7 @@ sealed class AddBorderPointState {
     data class Error(val message: String) : AddBorderPointState()
     data class Input(
         val basicInfo: BasicBorderInfo = BasicBorderInfo(),
-        val operatingHours: OperatingHours = OperatingHours(null, null),
+        val operatingHours: OperatingHours = OperatingHours(null),
         val accessibility: Accessibility = Accessibility(
             TrafficTypes(),
             RoadConditions(RoadCondition(null, null), RoadCondition(null, null))

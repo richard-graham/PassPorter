@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ElevatedCard
@@ -189,14 +188,7 @@ fun DetailContent(
                             hours.regular?.let {
                                 InfoRow(
                                     icon = Icons.Default.Schedule,
-                                    label = "Regular Hours",
-                                    value = it
-                                )
-                            }
-                            hours.covid?.let {
-                                InfoRow(
-                                    icon = Icons.Default.Warning,
-                                    label = "COVID Hours",
+                                    label = "Open Hours",
                                     value = it
                                 )
                             }

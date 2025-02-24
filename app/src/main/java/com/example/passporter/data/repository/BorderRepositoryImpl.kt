@@ -1,5 +1,7 @@
 package com.example.passporter.data.repository
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.passporter.data.local.dao.BorderDao
 import com.example.passporter.data.mapper.BorderPointMapper
 import com.example.passporter.data.mapper.BorderUpdateMapper
@@ -28,6 +30,7 @@ class BorderRepositoryImpl @Inject constructor(
     private val dispatcherProvider: DispatcherProvider
 ) : BorderRepository {
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun syncBorderPoints(): Flow<List<BorderPoint>> = channelFlow {
         // If database was empty, fetch from network
         if (borderDao.getBorderPoints().first().isEmpty()) {
@@ -46,6 +49,7 @@ class BorderRepositoryImpl @Inject constructor(
         }
     }.flowOn(dispatcherProvider.io)
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun getBorderPointsByCoordinates(bounds: LatLngBounds): Flow<List<BorderPoint>> = channelFlow {
         launch(dispatcherProvider.io) {
             val borderPoints = borderDao.getBorderPointsInBounds(
@@ -60,6 +64,7 @@ class BorderRepositoryImpl @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getBorderPointById(id: String): ResultUtil<BorderPoint> =
         withContext(dispatcherProvider.io) {
             try {
@@ -74,6 +79,7 @@ class BorderRepositoryImpl @Inject constructor(
             }
         }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> =
         withContext(dispatcherProvider.io) {
             try {
@@ -123,6 +129,7 @@ class BorderRepositoryImpl @Inject constructor(
             }
         }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun updateBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> {
         return try {
             // Update in Firestore
