@@ -1,5 +1,7 @@
 package com.example.passporter.presentation.feature.detail.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +24,6 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ElevatedCard
@@ -54,6 +55,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DetailContent(
@@ -160,6 +162,28 @@ fun DetailContent(
                             value = borderPoint.status.toString()
                         )
                         InfoRow(
+                            icon = Icons.Default.Info,
+                            label = "Border Type",
+                            value = borderPoint.borderType ?: "Not specified"
+                        )
+                        InfoRow(
+                            icon = Icons.Default.Info,
+                            label = "Crossing Type",
+                            value = borderPoint.crossingType ?: "Not specified"
+                        )
+                        if (borderPoint.description.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Description",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = borderPoint.description,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        InfoRow(
                             icon = Icons.Default.AccessTime,
                             label = "Last Updated",
                             value = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -185,11 +209,53 @@ fun DetailContent(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
 
+                            // Regular Hours
                             hours.regular?.let {
-                                InfoRow(
-                                    icon = Icons.Default.Schedule,
-                                    label = "Open Hours",
-                                    value = it
+                                Text(
+                                    text = "Regular Hours",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = formatScheduleText(it),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+
+                            // Summer Hours
+                            hours.summerHours?.let { summer ->
+                                Text(
+                                    text = "Summer Season",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                Text(
+                                    text = "From ${dateFormat.format(Date(summer.startDate.toEpochDay() * 24 * 60 * 60 * 1000))} " +
+                                            "to ${dateFormat.format(Date(summer.endDate.toEpochDay() * 24 * 60 * 60 * 1000))}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = formatScheduleText(summer.schedule),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+
+                            // Winter Hours
+                            hours.winterHours?.let { winter ->
+                                Text(
+                                    text = "Winter Season",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                Text(
+                                    text = "From ${dateFormat.format(Date(winter.startDate.toEpochDay() * 24 * 60 * 60 * 1000))} " +
+                                            "to ${dateFormat.format(Date(winter.endDate.toEpochDay() * 24 * 60 * 60 * 1000))}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = formatScheduleText(winter.schedule),
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                             }
                         }
@@ -362,4 +428,52 @@ private fun FacilityChip(
         label = { Text(text) },
         modifier = modifier
     )
+}
+
+private fun formatScheduleText(scheduleText: String): String {
+    if (scheduleText.isBlank()) return "Not specified"
+
+    // Define days of the week in order
+    val daysOrder = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+    // Parse the schedule text into a map of day ranges and their hours
+    val scheduleMap = mutableMapOf<String, String>()
+    scheduleText.split(";").forEach { part ->
+        val trimmedPart = part.trim()
+        val colonIndex = trimmedPart.indexOf(':')
+        if (colonIndex > 0) {
+            val days = trimmedPart.substring(0, colonIndex).trim()
+            val hours = trimmedPart.substring(colonIndex + 1).trim()
+            scheduleMap[days] = hours
+        }
+    }
+
+    // Sort the entries based on the first day in each range
+    val sortedEntries = scheduleMap.entries.sortedWith { a, b ->
+        val firstDayA = extractFirstDay(a.key, daysOrder)
+        val firstDayB = extractFirstDay(b.key, daysOrder)
+        daysOrder.indexOf(firstDayA).compareTo(daysOrder.indexOf(firstDayB))
+    }
+
+    // Format each entry with proper line breaks
+    return sortedEntries.joinToString("\n") { (days, hours) ->
+        "$days:\n   $hours"
+    }
+}
+
+// Helper function to extract the first day from a day range
+private fun extractFirstDay(dayRange: String, daysOrder: List<String>): String {
+    // If it's a range like "Monday-Friday"
+    if (dayRange.contains("-")) {
+        val firstDay = dayRange.split("-")[0].trim()
+        return firstDay
+    }
+    // If it's a list like "Monday, Wednesday"
+    else if (dayRange.contains(",")) {
+        val days = dayRange.split(",").map { it.trim() }
+        // Find the earliest day in the week
+        return days.minByOrNull { daysOrder.indexOf(it) } ?: daysOrder.first()
+    }
+    // If it's a single day
+    return dayRange.trim()
 }

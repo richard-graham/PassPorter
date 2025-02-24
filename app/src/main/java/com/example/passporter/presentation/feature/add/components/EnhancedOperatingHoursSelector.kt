@@ -699,9 +699,6 @@ private fun parseScheduleString(schedule: String): Map<String, DaySchedule> {
 
 // Also update formatScheduleToString to better handle all-day ranges
 private fun formatScheduleToString(schedule: Map<String, DaySchedule>): String {
-    // Make sure we debug our input
-    // println("formatScheduleToString input: ${schedule.entries.joinToString { "${it.key}=${it.value.isOpen}" }}")
-
     // First, handle the open days with their time ranges
     val openDaysString = schedule.entries
         .filter { it.value.isOpen && it.value.ranges.isNotEmpty() }

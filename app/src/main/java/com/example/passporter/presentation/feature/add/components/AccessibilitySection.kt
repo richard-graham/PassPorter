@@ -71,12 +71,8 @@ fun AccessibilitySection(
                 )
 
                 // Approaching Road
-                Text(
-                    text = "Approaching Road",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                RoadConditionInputs(
+                RoadConditionSection(
+                    title = "Approaching Road",
                     roadCondition = accessibility.roadConditions.approaching,
                     onConditionChange = { updatedCondition ->
                         onAccessibilityChange(
@@ -89,13 +85,8 @@ fun AccessibilitySection(
                     }
                 )
 
-                // Departing Road
-                Text(
-                    text = "Departing Road",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                RoadConditionInputs(
+                RoadConditionSection(
+                    title = "Departing Road",
                     roadCondition = accessibility.roadConditions.departing,
                     onConditionChange = { updatedCondition ->
                         onAccessibilityChange(
@@ -240,4 +231,21 @@ private fun RoadConditionInputs(
             )
         }
     }
+}
+
+@Composable
+private fun RoadConditionSection(
+    title: String,
+    roadCondition: RoadCondition,
+    onConditionChange: (RoadCondition) -> Unit
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.padding(top = 8.dp)
+    )
+    RoadConditionInputs(
+        roadCondition = roadCondition,
+        onConditionChange = onConditionChange
+    )
 }

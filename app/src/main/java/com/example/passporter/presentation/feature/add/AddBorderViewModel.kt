@@ -38,6 +38,11 @@ class AddBorderPointViewModel @Inject constructor(
     private val isEditing = borderId != null
 
     init {
+        if (savedStateHandle.contains("lat") && savedStateHandle.contains("lng")) {
+            latitude = savedStateHandle.get<Float>("lat")?.toDouble() ?: 0.0
+            longitude = savedStateHandle.get<Float>("lng")?.toDouble() ?: 0.0
+        }
+
         if (isEditing) {
             loadExistingBorderPoint()
         }
@@ -118,6 +123,12 @@ class AddBorderPointViewModel @Inject constructor(
             _state.value = AddBorderPointState.Error("Please fill in all required fields")
             return
         }
+
+        if (latitude == 0.0 && longitude == 0.0) {
+            _state.value = AddBorderPointState.Error("No location provided")
+            return
+        }
+
 
         viewModelScope.launch {
             _state.value = AddBorderPointState.Loading
