@@ -23,6 +23,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,17 +62,38 @@ fun EnhancedOperatingHoursSelector(
     var datePickerType by remember { mutableStateOf<String?>(null) }
     var seasonExpanded by remember { mutableStateOf(false) }
 
-    val schedule = remember(operatingHours) {
-        when (selectedSeason) {
-            "summer" -> operatingHours.summerHours?.schedule
-            "winter" -> operatingHours.winterHours?.schedule
-            else -> operatingHours.regular
-        }?.let { parseScheduleString(it) } ?: DAYS.associateWith { DaySchedule() }
+    val schedule = when (selectedSeason) {
+        "summer" -> operatingHours.summerHours?.schedule
+        "winter" -> operatingHours.winterHours?.schedule
+        else -> operatingHours.regular
+    }?.let { parseScheduleString(it) } ?: DAYS.associateWith { DaySchedule() }
+
+    val isScheduleEmpty = schedule.values.all { !it.isOpen || it.ranges.isEmpty() }
+    val allDaysHaveSameSchedule = schedule.values.distinct().size == 1
+    val defaultTimeRange = if (schedule.values.isNotEmpty()) {
+        val firstDay = schedule.values.first()
+        if (firstDay.ranges.isNotEmpty()) firstDay.ranges.first() else TimeRange("09:00", "17:00")
+    } else {
+        TimeRange("09:00", "17:00")
+    }
+
+    var showDetailedView by remember {
+        mutableStateOf(!(allDaysHaveSameSchedule || isScheduleEmpty))
+    }
+
+    // Track if the schedule is open for the entire week (used for the main toggle)
+    var allDaysOpen by remember(schedule) {
+        mutableStateOf(schedule.values.all { it.isOpen })
+    }
+
+    LaunchedEffect(schedule) {
+        val newIsEmpty = schedule.values.all { !it.isOpen || it.ranges.isEmpty() }
+        val newAllSame = schedule.values.distinct().size == 1
+        showDetailedView = !(newAllSame || newIsEmpty)
     }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Season selector dropdown
@@ -85,9 +107,7 @@ fun EnhancedOperatingHoursSelector(
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = seasonExpanded) },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
+                modifier = Modifier.menuAnchor().fillMaxWidth()
             )
 
             ExposedDropdownMenu(
@@ -150,59 +170,174 @@ fun EnhancedOperatingHoursSelector(
             }
         }
 
-        // Days schedule
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        // Simplified view toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            DAYS.forEach { day ->
-                DayScheduleCard(
-                    day = day,
-                    schedule = schedule[day] ?: DaySchedule(),
-                    onScheduleChange = { newSchedule ->
-                        val updatedSchedule = schedule.toMutableMap().apply {
-                            put(day, newSchedule)
-                        }
-                        val formattedSchedule = formatScheduleToString(updatedSchedule)
+            Text(
+                text = "Show detailed schedule",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Switch(
+                checked = showDetailedView,
+                onCheckedChange = { showDetailedView = it }
+            )
+        }
 
-                        when (selectedSeason) {
-                            "summer" -> {
-                                val currentSummerHours = operatingHours.summerHours
-                                onOperatingHoursChange(
-                                    operatingHours.copy(
-                                        summerHours = currentSummerHours?.copy(
-                                            schedule = formattedSchedule
-                                        ) ?: SeasonalHours(
-                                            schedule = formattedSchedule,
-                                            startDate = LocalDate.now(),
-                                            endDate = LocalDate.now().plusMonths(3)
-                                        )
-                                    )
+        if (!showDetailedView) {
+            // Simplified view - single card for all days
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Toggle for the entire week
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Open all week",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Switch(
+                            checked = allDaysOpen,
+                            onCheckedChange = { isOpen ->
+                                allDaysOpen = isOpen
+
+                                // Update schedule for all days
+                                val updatedSchedule = DAYS.associateWith { day ->
+                                    val currentSchedule = schedule[day] ?: DaySchedule()
+                                    val updatedRanges = if (isOpen && currentSchedule.ranges.isEmpty()) {
+                                        listOf(defaultTimeRange)
+                                    } else {
+                                        currentSchedule.ranges
+                                    }
+                                    currentSchedule.copy(isOpen = isOpen, ranges = updatedRanges)
+                                }
+
+                                val formattedSchedule = formatScheduleToString(updatedSchedule)
+                                updateOperatingHours(
+                                    operatingHours,
+                                    selectedSeason,
+                                    formattedSchedule,
+                                    onOperatingHoursChange
                                 )
                             }
+                        )
+                    }
 
-                            "winter" -> {
-                                val currentWinterHours = operatingHours.winterHours
-                                onOperatingHoursChange(
-                                    operatingHours.copy(
-                                        winterHours = currentWinterHours?.copy(
-                                            schedule = formattedSchedule
-                                        ) ?: SeasonalHours(
-                                            schedule = formattedSchedule,
-                                            startDate = LocalDate.now(),
-                                            endDate = LocalDate.now().plusMonths(3)
-                                        )
+                    if (allDaysOpen) {
+                        // Time selector for the whole week
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TimePickerDropdown(
+                                label = "Open",
+                                selected = defaultTimeRange.start,
+                                onTimeSelected = { newTime ->
+                                    // Update start time for all days
+                                    val updatedSchedule = schedule.mapValues { (_, daySchedule) ->
+                                        if (daySchedule.isOpen && daySchedule.ranges.isNotEmpty()) {
+                                            val updatedRanges = daySchedule.ranges.map { it.copy(start = newTime) }
+                                            daySchedule.copy(ranges = updatedRanges)
+                                        } else {
+                                            daySchedule
+                                        }
+                                    }
+
+                                    val formattedSchedule = formatScheduleToString(updatedSchedule)
+                                    updateOperatingHours(
+                                        operatingHours,
+                                        selectedSeason,
+                                        formattedSchedule,
+                                        onOperatingHoursChange
                                     )
-                                )
-                            }
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
 
-                            else -> onOperatingHoursChange(
-                                operatingHours.copy(
-                                    regular = formattedSchedule
-                                )
+                            Text("to")
+
+                            TimePickerDropdown(
+                                label = "Close",
+                                selected = defaultTimeRange.end,
+                                onTimeSelected = { newTime ->
+                                    // Update end time for all days
+                                    val updatedSchedule = schedule.mapValues { (_, daySchedule) ->
+                                        if (daySchedule.isOpen && daySchedule.ranges.isNotEmpty()) {
+                                            val updatedRanges = daySchedule.ranges.map { it.copy(end = newTime) }
+                                            daySchedule.copy(ranges = updatedRanges)
+                                        } else {
+                                            daySchedule
+                                        }
+                                    }
+
+                                    val formattedSchedule = formatScheduleToString(updatedSchedule)
+                                    updateOperatingHours(
+                                        operatingHours,
+                                        selectedSeason,
+                                        formattedSchedule,
+                                        onOperatingHoursChange
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
                             )
                         }
+
+                        // Show summary of the schedule
+                        val formattedScheduleSummary = if (allDaysHaveSameSchedule) {
+                            val firstDay = schedule.values.first()
+                            if (firstDay.isOpen && firstDay.ranges.isNotEmpty()) {
+                                val range = firstDay.ranges.first()
+                                "All days: ${range.start} - ${range.end}"
+                            } else {
+                                "All days closed"
+                            }
+                        } else {
+                            "Custom schedule (varies by day)"
+                        }
+
+                        Text(
+                            text = formattedScheduleSummary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
-                )
+                }
+            }
+        } else {
+            // Detailed view - individual cards for each day
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                DAYS.forEach { day ->
+                    DayScheduleCard(
+                        day = day,
+                        schedule = schedule[day] ?: DaySchedule(),
+                        onScheduleChange = { newSchedule ->
+                            val updatedSchedule = schedule.toMutableMap().apply {
+                                put(day, newSchedule)
+                            }
+                            val formattedSchedule = formatScheduleToString(updatedSchedule)
+                            updateOperatingHours(
+                                operatingHours,
+                                selectedSeason,
+                                formattedSchedule,
+                                onOperatingHoursChange
+                            )
+                        }
+                    )
+                }
             }
         }
     }
@@ -320,7 +455,6 @@ fun EnhancedOperatingHoursSelector(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DayScheduleCard(
     day: String,
@@ -348,7 +482,13 @@ private fun DayScheduleCard(
                 Switch(
                     checked = schedule.isOpen,
                     onCheckedChange = { isOpen ->
-                        onScheduleChange(schedule.copy(isOpen = isOpen))
+                        val newRanges = if (isOpen && schedule.ranges.isEmpty()) {
+                            // Add default time range when toggling from closed to open
+                            listOf(TimeRange("09:00", "17:00"))
+                        } else {
+                            schedule.ranges
+                        }
+                        onScheduleChange(schedule.copy(isOpen = isOpen, ranges = newRanges))
                     }
                 )
             }
@@ -471,56 +611,187 @@ private fun parseScheduleString(schedule: String): Map<String, DaySchedule> {
     val result = mutableMapOf<String, DaySchedule>()
 
     try {
-        schedule.split(";").forEach { daySchedule ->
-            val (days, times) = daySchedule.trim().split(":")
-            val timeRanges = times.trim().split(",").map { range ->
-                val (start, end) = range.trim().split("-")
-                TimeRange(start.trim(), end.trim())
-            }
+        // Split the schedule string by semicolons to get each day or day range
+        schedule.split(";").forEach { dayScheduleStr ->
+            val daySchedule = dayScheduleStr.trim()
+            if (daySchedule.isNotEmpty()) {
+                // Find the position of the first colon - this separates days from time ranges
+                val colonPos = daySchedule.indexOf(':')
+                if (colonPos > 0) {
+                    val daysStr = daySchedule.substring(0, colonPos).trim()
+                    val timesStr = daySchedule.substring(colonPos + 1).trim()
 
-            val daysList = if (days.contains("-")) {
-                val (start, end) = days.split("-")
-                val startIndex = DAYS.indexOf(start.trim())
-                val endIndex = DAYS.indexOf(end.trim())
-                DAYS.subList(startIndex, endIndex + 1)
-            } else {
-                listOf(days.trim())
-            }
+                    // Check if this is a closed day marker
+                    val isClosed = timesStr.trim().equals("CLOSED", ignoreCase = true)
 
-            daysList.forEach { day ->
-                result[day] = DaySchedule(isOpen = true, ranges = timeRanges)
+                    // Parse the time ranges if not closed
+                    val timeRanges = if (!isClosed) {
+                        timesStr.split(",").map { range ->
+                            val rangeParts = range.trim().split("-")
+                            if (rangeParts.size == 2) {
+                                TimeRange(rangeParts[0].trim(), rangeParts[1].trim())
+                            } else {
+                                // Default range if format is incorrect
+                                TimeRange("09:00", "17:00")
+                            }
+                        }
+                    } else {
+                        emptyList() // No time ranges for closed days
+                    }
+
+                    // Parse the days or day range
+                    val daysList = if (daysStr.contains("-")) {
+                        // Handle day range like "Monday-Friday"
+                        val rangeParts = daysStr.split("-")
+                        if (rangeParts.size == 2) {
+                            val startDay = rangeParts[0].trim()
+                            val endDay = rangeParts[1].trim()
+                            val startIndex = DAYS.indexOf(startDay)
+                            val endIndex = DAYS.indexOf(endDay)
+                            if (startIndex >= 0 && endIndex >= 0) {
+                                if (startIndex <= endIndex) {
+                                    // Normal range like Monday-Friday
+                                    DAYS.subList(startIndex, endIndex + 1)
+                                } else {
+                                    // Wrapping range like Sunday-Tuesday (wraps around week)
+                                    DAYS.subList(startIndex, DAYS.size) + DAYS.subList(0, endIndex + 1)
+                                }
+                            } else {
+                                listOf(startDay)
+                            }
+                        } else {
+                            listOf(daysStr)
+                        }
+                    } else if (daysStr.contains(",")) {
+                        // Handle comma-separated days like "Monday, Tuesday"
+                        daysStr.split(",").map { it.trim() }
+                    } else {
+                        // Single day
+                        listOf(daysStr)
+                    }
+
+                    // Set the schedule for each day
+                    daysList.forEach { day ->
+                        if (DAYS.contains(day)) {
+                            result[day] = DaySchedule(
+                                isOpen = !isClosed,
+                                ranges = if (isClosed) emptyList() else timeRanges
+                            )
+                        }
+                    }
+                }
             }
         }
     } catch (e: Exception) {
+        // In case of any parsing error, return default schedule
         return DAYS.associateWith { DaySchedule() }
     }
 
+    // Set default for any day not specified in the schedule
     DAYS.forEach { day ->
         if (!result.containsKey(day)) {
-            result[day] = DaySchedule(isOpen = false, ranges = emptyList())
+            result[day] = DaySchedule(isOpen = true, ranges = listOf(TimeRange("09:00", "17:00")))
         }
     }
 
     return result
 }
 
+// Also update formatScheduleToString to better handle all-day ranges
 private fun formatScheduleToString(schedule: Map<String, DaySchedule>): String {
-    return schedule.entries
-        .filter { it.value.isOpen }
+    // Make sure we debug our input
+    // println("formatScheduleToString input: ${schedule.entries.joinToString { "${it.key}=${it.value.isOpen}" }}")
+
+    // First, handle the open days with their time ranges
+    val openDaysString = schedule.entries
+        .filter { it.value.isOpen && it.value.ranges.isNotEmpty() }
         .groupBy(
-            keySelector = { it.value.ranges },
-            valueTransform = { it.key }
+            keySelector = { entry -> entry.value.ranges },
+            valueTransform = { entry -> entry.key }
         )
         .map { (ranges, days) ->
-            val daysStr = when {
-                days.size > 2 -> "${days.first()}-${days.last()}"
-                days.size == 2 -> "${days[0]}, ${days[1]}"
-                else -> days.first()
-            }
+            // Find consecutive day sequences properly
+            val formattedDays = formatDaysWithSequences(days.sorted())
+
+            // Format the time ranges
             val rangesStr = ranges.joinToString(", ") { "${it.start}-${it.end}" }
-            "$daysStr: $rangesStr"
+
+            // Combine days and ranges
+            "$formattedDays: $rangesStr"
         }
+        .filter { it.isNotEmpty() }
         .joinToString("; ")
+
+    // Now, handle closed days by adding a special marker
+    val closedDays = schedule.entries
+        .filter { !it.value.isOpen }
+        .map { it.key }
+        .sorted()
+
+    // If we have closed days, add them to the string with a special marker
+    return if (closedDays.isEmpty()) {
+        openDaysString
+    } else {
+        // Format closed days using the same sequence detection logic
+        val closedDaysString = formatDaysWithSequences(closedDays) + ": CLOSED"
+
+        // Combine open and closed days strings
+        if (openDaysString.isNotEmpty()) {
+            "$openDaysString; $closedDaysString"
+        } else {
+            closedDaysString
+        }
+    }
+}
+
+/**
+ * Formats a list of days, properly handling consecutive sequences.
+ * Returns a formatted string like "Monday-Friday" or "Monday, Wednesday, Friday"
+ */
+private fun formatDaysWithSequences(days: List<String>): String {
+    if (days.isEmpty()) return ""
+    if (days.size == 1) return days.first()
+
+    // Make sure days are sorted by their order in the week
+    val sortedDays = days.sortedBy { DAYS.indexOf(it) }
+
+    // Optimization for when all days are present
+    if (sortedDays.size == 7 &&
+        sortedDays.containsAll(DAYS)) {
+        return "Monday-Sunday"
+    }
+
+    // Find consecutive sequences
+    val sequences = mutableListOf<List<String>>()
+    var currentSequence = mutableListOf(sortedDays.first())
+
+    for (i in 1 until sortedDays.size) {
+        val prevDayIndex = DAYS.indexOf(currentSequence.last())
+        val currDayIndex = DAYS.indexOf(sortedDays[i])
+
+        if (currDayIndex == prevDayIndex + 1) {
+            // Consecutive day, add to current sequence
+            currentSequence.add(sortedDays[i])
+        } else {
+            // Gap found, start a new sequence
+            sequences.add(currentSequence.toList())
+            currentSequence = mutableListOf(sortedDays[i])
+        }
+    }
+
+    // Add the last sequence
+    if (currentSequence.isNotEmpty()) {
+        sequences.add(currentSequence.toList())
+    }
+
+    // Format each sequence
+    return sequences.joinToString("; ") { seq ->
+        when {
+            seq.size > 2 -> "${seq.first()}-${seq.last()}"
+            seq.size == 2 -> "${seq[0]}, ${seq[1]}"
+            else -> seq[0]
+        }
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -541,6 +812,51 @@ private fun formatDateForButton(date: LocalDate?, defaultText: String): String {
             12 -> "Dec"
             else -> ""
         }
-        "${month} ${it.dayOfMonth}, ${it.year}"
+        "$month ${it.dayOfMonth}, ${it.year}"
     } ?: defaultText
+}
+
+// Helper function to update operating hours based on season
+@RequiresApi(Build.VERSION_CODES.O)
+private fun updateOperatingHours(
+    operatingHours: OperatingHours,
+    selectedSeason: String,
+    formattedSchedule: String,
+    onOperatingHoursChange: (OperatingHours) -> Unit
+) {
+    when (selectedSeason) {
+        "summer" -> {
+            val currentSummerHours = operatingHours.summerHours
+            onOperatingHoursChange(
+                operatingHours.copy(
+                    summerHours = currentSummerHours?.copy(
+                        schedule = formattedSchedule
+                    ) ?: SeasonalHours(
+                        schedule = formattedSchedule,
+                        startDate = LocalDate.now(),
+                        endDate = LocalDate.now().plusMonths(3)
+                    )
+                )
+            )
+        }
+        "winter" -> {
+            val currentWinterHours = operatingHours.winterHours
+            onOperatingHoursChange(
+                operatingHours.copy(
+                    winterHours = currentWinterHours?.copy(
+                        schedule = formattedSchedule
+                    ) ?: SeasonalHours(
+                        schedule = formattedSchedule,
+                        startDate = LocalDate.now(),
+                        endDate = LocalDate.now().plusMonths(3)
+                    )
+                )
+            )
+        }
+        else -> onOperatingHoursChange(
+            operatingHours.copy(
+                regular = formattedSchedule
+            )
+        )
+    }
 }
