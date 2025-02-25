@@ -102,7 +102,7 @@ class FirebaseAuthService @Inject constructor(
         }
     }
 
-    private suspend fun getUserData(userId: String): Result<UserDto> =
+    override suspend fun getUserData(userId: String): Result<UserDto> =
         try {
             val document = firestore.collection("users")
                 .document(userId)

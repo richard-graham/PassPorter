@@ -15,6 +15,7 @@ data class BorderPoint(
     val statusComment: String?,
     val lastUpdate: Long,
     val createdBy: String,
+    val lastUpdatedBy: String? = null,
     val description: String,
     val borderType: String?,
     val crossingType: String?,

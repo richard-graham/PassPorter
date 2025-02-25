@@ -73,14 +73,25 @@ fun BorderDetailsScreen(
 
             is BorderDetailsState.Success -> {
                 val borderPoint = currentState.borderPoint
+                val createdByUser = currentState.createdByUser
+                val lastUpdatedByUser = currentState.lastUpdatedByUser
 
-                DetailContent(
-                    borderPoint = borderPoint,
-                    onNavigateUp = onNavigateBack,
-                    onEditClick = { section ->
-                        navController.navigate(Screen.EditBorderPoint.createRouteWithSection(borderPoint.id, section))
-                    }
-                )
+                Column {
+                    DetailContent(
+                        borderPoint = borderPoint,
+                        createdByUser = createdByUser,
+                        lastUpdatedByUser = lastUpdatedByUser,
+                        onNavigateUp = onNavigateBack,
+                        onEditClick = { section ->
+                            navController.navigate(
+                                Screen.EditBorderPoint.createRouteWithSection(
+                                    borderPoint.id,
+                                    section
+                                )
+                            )
+                        }
+                    )
+                }
             }
 
             else -> {}

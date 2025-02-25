@@ -78,6 +78,15 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
 
+    override suspend fun getUserById(userId: String): Result<User> {
+        return try {
+            val result = authService.getUserData(userId)
+            result.map { userMapper.mapToDomain(it) }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun mapToAuthError(error: Exception): AuthError = when (error) {
         is FirebaseAuthInvalidCredentialsException -> AuthError.InvalidCredentials
         is FirebaseNetworkException -> AuthError.NetworkError

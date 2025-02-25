@@ -12,4 +12,5 @@ interface AuthService {
     ): Result<UserDto>
     suspend fun resetPassword(email: String): Result<Unit>
     suspend fun signOut()
+    suspend fun getUserData(userId: String): Result<UserDto>
 }

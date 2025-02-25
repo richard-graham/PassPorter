@@ -23,6 +23,7 @@ sealed class AddBorderPointState {
         val facilities: Facilities = Facilities(),
         val latitude: Double = 0.0,
         val longitude: Double = 0.0,
+        val createdBy: String? = null,
         override val additionComplete: Boolean = false
     ) : AddBorderPointState() {
         fun isValid(): Boolean = with(basicInfo) {

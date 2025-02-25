@@ -8,6 +8,7 @@ import com.example.passporter.domain.entity.BorderPoint
 import com.example.passporter.domain.entity.BorderStatus
 import com.example.passporter.domain.entity.Facilities
 import com.example.passporter.domain.entity.OperatingHours
+import com.example.passporter.domain.repository.AuthRepository
 import com.example.passporter.domain.usecase.border.AddBorderPointUseCase
 import com.example.passporter.domain.usecase.border.DeleteBorderPointUseCase
 import com.example.passporter.domain.usecase.border.GetBorderPointDetailsUseCase
@@ -17,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -28,6 +30,7 @@ class AddBorderPointViewModel @Inject constructor(
     private val getBorderPointDetailsUseCase: GetBorderPointDetailsUseCase,
     private val addBorderPointUseCase: AddBorderPointUseCase,
     private val deleteBorderPointUseCase: DeleteBorderPointUseCase,
+    private val authRepository: AuthRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -39,7 +42,14 @@ class AddBorderPointViewModel @Inject constructor(
     private val borderId: String? = savedStateHandle["borderId"]
     private val isEditing = borderId != null
 
+    private var currentUser: String = ""
+
     init {
+        viewModelScope.launch {
+            val user = authRepository.currentUser.first()
+            currentUser = user?.id ?: "unknown_user"
+        }
+
         // Initialize location from savedStateHandle if available
         val initialLat = savedStateHandle.get<Float>("lat")?.toDouble() ?: 0.0
         val initialLng = savedStateHandle.get<Float>("lng")?.toDouble() ?: 0.0
@@ -85,6 +95,7 @@ class AddBorderPointViewModel @Inject constructor(
                             operatingHours = borderPoint.operatingHours ?: OperatingHours("", ""),
                             accessibility = borderPoint.accessibility,
                             facilities = borderPoint.facilities,
+                            createdBy = borderPoint.createdBy,
                             latitude = borderPoint.latitude,
                             longitude = borderPoint.longitude
                         )
@@ -167,7 +178,15 @@ class AddBorderPointViewModel @Inject constructor(
                 statusComment = if (currentState.basicInfo.status != "OPEN")
                     currentState.basicInfo.statusComment.ifBlank { null } else null,
                 lastUpdate = System.currentTimeMillis(),
-                createdBy = "user", // Should come from auth system
+                createdBy = if (isEditing) {
+                    when (val existingPointResult = getBorderPointDetailsUseCase(borderId!!)) {
+                        is ResultUtil.Success -> existingPointResult.data.createdBy
+                        is ResultUtil.Error -> currentUser
+                    }
+                } else {
+                    currentUser
+                },
+                lastUpdatedBy = currentUser,
                 description = currentState.basicInfo.description,
                 borderType = currentState.basicInfo.borderType,
                 crossingType = currentState.basicInfo.crossingType,

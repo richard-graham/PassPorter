@@ -4,9 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.passporter.domain.entity.BorderPoint
+import com.example.passporter.domain.entity.User
 import com.example.passporter.domain.usecase.border.GetBorderPointDetailsUseCase
+import com.example.passporter.domain.usecase.border.GetUserByIdUseCase
 import com.example.passporter.presentation.util.ResultUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class BorderDetailsViewModel @Inject constructor(
     private val getBorderPointDetailsUseCase: GetBorderPointDetailsUseCase,
+    private val getUserByIdUseCase: GetUserByIdUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val borderId: String = checkNotNull(savedStateHandle["borderId"])
@@ -34,18 +38,52 @@ class BorderDetailsViewModel @Inject constructor(
     private fun loadBorderPoint() {
         viewModelScope.launch {
             _state.value = BorderDetailsState.Loading
-            when (val result = getBorderPointDetailsUseCase(borderId)) {
+
+            // First, load the border point
+            when (val borderPointResult = getBorderPointDetailsUseCase(borderId)) {
                 is ResultUtil.Success -> {
-                    _state.value = BorderDetailsState.Success(result.data)
+                    val borderPoint = borderPointResult.data
+
+                    // Fetch creator and last updater user details concurrently
+                    val createdByUserDeferred = async {
+                        getUserByIdUseCase(borderPoint.createdBy)
+                    }
+
+                    val lastUpdatedByUserDeferred = borderPoint.lastUpdatedBy?.let { userId ->
+                        async { getUserByIdUseCase(userId) }
+                    }
+
+                    // Resolve user details
+                    val createdByUser = createdByUserDeferred.await().let {
+                        when (it) {
+                            is ResultUtil.Success -> it.data
+                            is ResultUtil.Error -> null
+                        }
+                    }
+
+                    val lastUpdatedByUser = lastUpdatedByUserDeferred?.await()?.let {
+                        when (it) {
+                            is ResultUtil.Success -> it.data
+                            is ResultUtil.Error -> null
+                        }
+                    }
+
+                    // Update state with border point and user details
+                    _state.value = BorderDetailsState.Success(
+                        borderPoint = borderPoint,
+                        createdByUser = createdByUser,
+                        lastUpdatedByUser = lastUpdatedByUser
+                    )
                 }
                 is ResultUtil.Error -> {
                     _state.value = BorderDetailsState.Error(
-                        result.exception.message ?: "Failed to load border point details"
+                        borderPointResult.exception.message ?: "Failed to load border point details"
                     )
                 }
             }
         }
     }
+
 
     fun retry() {
         loadBorderPoint()
@@ -54,6 +92,10 @@ class BorderDetailsViewModel @Inject constructor(
 
 sealed class BorderDetailsState {
     data object Loading : BorderDetailsState()
-    data class Success(val borderPoint: BorderPoint) : BorderDetailsState()
+    data class Success(
+        val borderPoint: BorderPoint,
+        val createdByUser: User? = null,
+        val lastUpdatedByUser: User? = null
+    ) : BorderDetailsState()
     data class Error(val message: String) : BorderDetailsState()
 }

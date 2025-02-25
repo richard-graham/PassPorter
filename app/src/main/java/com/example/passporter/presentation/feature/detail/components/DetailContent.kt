@@ -41,9 +41,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.passporter.domain.entity.BorderPoint
+import com.example.passporter.domain.entity.User
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -62,6 +64,8 @@ import java.util.Locale
 @Composable
 fun DetailContent(
     borderPoint: BorderPoint,
+    createdByUser: User?,
+    lastUpdatedByUser: User?,
     onNavigateUp: () -> Unit,
     onEditClick: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -175,11 +179,6 @@ fun DetailContent(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        InfoRow(
-                            icon = Icons.Default.LocationOn,
-                            label = "Countries",
-                            value = "${borderPoint.countryA} - ${borderPoint.countryB}"
-                        )
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -245,6 +244,11 @@ fun DetailContent(
                                 }
                             }
                         }
+                        InfoRow(
+                            icon = Icons.Default.LocationOn,
+                            label = "Countries",
+                            value = "${borderPoint.countryA} - ${borderPoint.countryB}"
+                        )
                         InfoRow(
                             icon = Icons.Default.Info,
                             label = "Border Type",
@@ -444,6 +448,28 @@ fun DetailContent(
                             }
                         }
                     }
+                }
+            }
+            // Additional metadata section
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                // Created By
+                Text(
+                    text = "Created by: ${createdByUser?.displayName ?: "Unknown"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic
+                )
+
+                // Last Updated By (if different from creator)
+                if (lastUpdatedByUser != null && lastUpdatedByUser.id != createdByUser?.id) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Last updated by: ${lastUpdatedByUser.displayName}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontStyle = FontStyle.Italic
+                    )
                 }
             }
         }

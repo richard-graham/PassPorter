@@ -17,7 +17,7 @@ import com.google.gson.reflect.TypeToken
 
 @Database(
     entities = [BorderPointEntity::class, BorderUpdateEntity::class],
-    version = 5
+    version = 6
 )
 @TypeConverters(Converters::class)
 abstract class BorderDatabase : RoomDatabase() {
@@ -162,13 +162,20 @@ abstract class BorderDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add the lastUpdatedBy field
+                db.execSQL("ALTER TABLE border_points ADD COLUMN lastUpdatedBy TEXT DEFAULT NULL")
+            }
+        }
+
         fun getDatabase(context: Context): BorderDatabase {
             return Room.databaseBuilder(
                 context.applicationContext,
                 BorderDatabase::class.java,
                 "border_database"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
         }
     }

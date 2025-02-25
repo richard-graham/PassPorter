@@ -5,12 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.passporter.presentation.navigation.NavGraph
 import com.example.passporter.presentation.navigation.Screen
@@ -49,13 +45,10 @@ class MainActivity : ComponentActivity() {
             PassPorterTheme {
                 val isAuthenticated by viewModel.isAuthenticated.collectAsState()
                 val navController = rememberNavController()
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavGraph(
-                        navController = navController,
-                        startDestination = if (isAuthenticated) Screen.Map.route else Screen.Auth.route,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                NavGraph(
+                    navController = navController,
+                    startDestination = if (isAuthenticated) Screen.Map.route else Screen.Auth.route
+                )
             }
         }
     }
