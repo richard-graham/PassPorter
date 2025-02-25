@@ -28,7 +28,25 @@ data class BorderPointDto(
 @Keep
 data class OperatingHours(
     val regular: String? = null,
-    val covid19: String? = null
+    val timezone: String = "UTC",
+    val summerHours: SeasonalHours? = null,
+    val winterHours: SeasonalHours? = null,
+    val closurePeriods: List<ClosurePeriod> = emptyList()
+)
+
+@Keep
+data class SeasonalHours(
+    val schedule: String = "",
+    val startDate: Long = 0, // Epoch days
+    val endDate: Long = 0    // Epoch days
+)
+
+@Keep
+data class ClosurePeriod(
+    val startDate: Long = 0, // Epoch days
+    val endDate: Long = 0,   // Epoch days
+    val reason: String? = null,
+    val isRecurring: Boolean = false
 )
 
 @Keep

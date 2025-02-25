@@ -21,6 +21,7 @@ import com.example.passporter.domain.entity.Accessibility
 import com.example.passporter.domain.entity.Amenities
 import com.example.passporter.domain.entity.BorderPoint
 import com.example.passporter.domain.entity.BorderStatus
+import com.example.passporter.domain.entity.ClosurePeriod
 import com.example.passporter.domain.entity.CurrencyExchange
 import com.example.passporter.domain.entity.Facilities
 import com.example.passporter.domain.entity.InsuranceServices
@@ -35,6 +36,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 class BorderPointMapper @Inject constructor() {
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toDto(domain: BorderPoint): BorderPointDto =
         BorderPointDto(
             id = domain.id,
@@ -55,7 +57,30 @@ class BorderPointMapper @Inject constructor() {
             dataSource = domain.dataSource,
             operatingHours = domain.operatingHours?.let {
                 com.example.passporter.data.remote.model.OperatingHours(
-                    regular = it.regular
+                    regular = it.regular,
+                    timezone = it.timezone,
+                    summerHours = it.summerHours?.let { summer ->
+                        com.example.passporter.data.remote.model.SeasonalHours(
+                            schedule = summer.schedule,
+                            startDate = summer.startDate.toEpochDay(),
+                            endDate = summer.endDate.toEpochDay()
+                        )
+                    },
+                    winterHours = it.winterHours?.let { winter ->
+                        com.example.passporter.data.remote.model.SeasonalHours(
+                            schedule = winter.schedule,
+                            startDate = winter.startDate.toEpochDay(),
+                            endDate = winter.endDate.toEpochDay()
+                        )
+                    },
+                    closurePeriods = it.closurePeriods.map { period ->
+                        com.example.passporter.data.remote.model.ClosurePeriod(
+                            startDate = period.startDate.toEpochDay(),
+                            endDate = period.endDate.toEpochDay(),
+                            reason = period.reason,
+                            isRecurring = period.isRecurring
+                        )
+                    }
                 )
             },
             operatingAuthority = domain.operatingAuthority,
@@ -112,6 +137,7 @@ class BorderPointMapper @Inject constructor() {
             }
         )
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toDomain(dto: BorderPointDto): BorderPoint =
         BorderPoint(
             id = dto.id,
@@ -130,9 +156,34 @@ class BorderPointMapper @Inject constructor() {
             crossingType = dto.crossingType,
             sourceId = dto.sourceId,
             dataSource = dto.dataSource,
-            operatingHours = OperatingHours(
-                regular = dto.operatingHours?.regular
-            ),
+            operatingHours = dto.operatingHours?.let { hours ->
+                OperatingHours(
+                    regular = hours.regular,
+                    timezone = hours.timezone,
+                    summerHours = hours.summerHours?.let { summer ->
+                        SeasonalHours(
+                            schedule = summer.schedule,
+                            startDate = LocalDate.ofEpochDay(summer.startDate),
+                            endDate = LocalDate.ofEpochDay(summer.endDate)
+                        )
+                    },
+                    winterHours = hours.winterHours?.let { winter ->
+                        SeasonalHours(
+                            schedule = winter.schedule,
+                            startDate = LocalDate.ofEpochDay(winter.startDate),
+                            endDate = LocalDate.ofEpochDay(winter.endDate)
+                        )
+                    },
+                    closurePeriods = hours.closurePeriods.map { period ->
+                        ClosurePeriod(
+                            startDate = LocalDate.ofEpochDay(period.startDate),
+                            endDate = LocalDate.ofEpochDay(period.endDate),
+                            reason = period.reason,
+                            isRecurring = period.isRecurring
+                        )
+                    }
+                )
+            },
             operatingAuthority = dto.operatingAuthority,
             accessibility = Accessibility(
                 trafficTypes = TrafficTypes(
