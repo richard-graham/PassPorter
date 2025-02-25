@@ -27,8 +27,13 @@ fun BasicInfoSection(
 ) {
     val borderTypes = listOf("Land", "Maritime", "Air", "River", "Other")
     val crossingTypes = listOf("Vehicular", "Pedestrian", "Rail", "Ferry", "Mixed")
+    val statusTypes = listOf("OPEN", "CLOSED", "RESTRICTED", "PARTIAL", "UNKNOWN")
+
+
     var borderTypeExpanded by remember { mutableStateOf(false) }
     var crossingTypeExpanded by remember { mutableStateOf(false) }
+    var statusExpanded by remember { mutableStateOf(false) }
+
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -61,6 +66,57 @@ fun BasicInfoSection(
             label = { Text("Country B *") },
             modifier = Modifier.fillMaxWidth()
         )
+
+        ExposedDropdownMenuBox(
+            expanded = statusExpanded,
+            onExpandedChange = { statusExpanded = it },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = basicInfo.status,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Status *") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = statusExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+
+            ExposedDropdownMenu(
+                expanded = statusExpanded,
+                onDismissRequest = { statusExpanded = false }
+            ) {
+                statusTypes.forEach { status ->
+                    DropdownMenuItem(
+                        text = { Text(status) },
+                        onClick = {
+                            onBasicInfoChange(basicInfo.copy(status = status))
+                            statusExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        if (basicInfo.status != "OPEN") {
+            OutlinedTextField(
+                value = basicInfo.statusComment,
+                onValueChange = { onBasicInfoChange(basicInfo.copy(statusComment = it)) },
+                label = {
+                    Text(
+                        when (basicInfo.status) {
+                            "RESTRICTED" -> "Restriction Details"
+                            "CLOSED" -> "Closure Information"
+                            "PARTIAL" -> "Partial Opening Details"
+                            "UNKNOWN" -> "Status Information"
+                            else -> "Status Comment"
+                        }
+                    )
+                },
+                placeholder = { Text("Add information about the current status...") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2
+            )
+        }
 
         // Border Type Dropdown
         ExposedDropdownMenuBox(
@@ -131,12 +187,5 @@ fun BasicInfoSection(
             modifier = Modifier.fillMaxWidth(),
             minLines = 3
         )
-
-        // Add dropdowns for borderType and crossingType
-        // Add field for operatingAuthority
     }
 }
-
-// Similar section components for OperatingHours, Accessibility, and Facilities
-// Implementation details omitted for brevity but would include all fields
-// from the data classes with appropriate input controls

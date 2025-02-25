@@ -18,7 +18,7 @@ import com.google.gson.reflect.TypeToken
 
 @Database(
     entities = [BorderPointEntity::class, BorderUpdateEntity::class],
-    version = 2
+    version = 4
 )
 @TypeConverters(Converters::class)
 abstract class BorderDatabase : RoomDatabase() {
@@ -117,13 +117,53 @@ abstract class BorderDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                Log.d("Migration", "Starting migration from 2 to 3")
+
+                // Add the new restrictionDetails column
+                db.execSQL("ALTER TABLE border_points ADD COLUMN restrictionDetails TEXT")
+
+                // Update existing RESTRICTED status borders with null for restrictionDetails
+                db.execSQL("""
+                    UPDATE border_points
+                    SET restrictionDetails = NULL
+                    WHERE status = 'RESTRICTED'
+                """)
+
+                Log.d("Migration", "Completed migration from 2 to 3")
+            }
+        }
+
+        // New migration from version 3 to 4 to replace restrictionDetails with statusComment
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                Log.d("Migration", "Starting migration from 3 to 4")
+
+                // Step 1: Add the new statusComment column
+                db.execSQL("ALTER TABLE border_points ADD COLUMN statusComment TEXT")
+
+                // Step 2: Copy data from restrictionDetails to statusComment for RESTRICTED status
+                db.execSQL("""
+            UPDATE border_points
+            SET statusComment = restrictionDetails
+            WHERE status = 'RESTRICTED' AND restrictionDetails IS NOT NULL
+        """)
+
+                // Note: We cannot remove columns in SQLite directly,
+                // so restrictionDetails will remain but won't be used by the app
+
+                Log.d("Migration", "Completed migration from 3 to 4")
+            }
+        }
+
         fun getDatabase(context: Context): BorderDatabase {
             return Room.databaseBuilder(
                 context.applicationContext,
                 BorderDatabase::class.java,
                 "border_database"
             )
-                .addMigrations(MIGRATION_1_2)  // Add migration to builder
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)  // Add migration to builder
                 .build()
         }
     }

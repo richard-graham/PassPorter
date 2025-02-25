@@ -180,11 +180,71 @@ fun DetailContent(
                             label = "Countries",
                             value = "${borderPoint.countryA} - ${borderPoint.countryB}"
                         )
-                        InfoRow(
-                            icon = Icons.Default.Info,
-                            label = "Status",
-                            value = borderPoint.status.toString()
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = when(borderPoint.status.name) {
+                                    "OPEN" -> MaterialTheme.colorScheme.primary
+                                    "CLOSED" -> MaterialTheme.colorScheme.error
+                                    "RESTRICTED" -> MaterialTheme.colorScheme.tertiary
+                                    "PARTIAL" -> MaterialTheme.colorScheme.secondary
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Status",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = borderPoint.status.toString(),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = when(borderPoint.status.name) {
+                                        "OPEN" -> MaterialTheme.colorScheme.primary
+                                        "CLOSED" -> MaterialTheme.colorScheme.error
+                                        "RESTRICTED" -> MaterialTheme.colorScheme.tertiary
+                                        "PARTIAL" -> MaterialTheme.colorScheme.secondary
+                                        else -> MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                            }
+                        }
+
+                        // Show status comment if present and status is not OPEN
+                        if (borderPoint.status.name != "OPEN" && !borderPoint.statusComment.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            borderPoint.statusComment.let { comment ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 32.dp, top = 4.dp, bottom = 8.dp)
+                                ) {
+                                    Text(
+                                        text = when(borderPoint.status.name) {
+                                            "RESTRICTED" -> "Restriction Details"
+                                            "CLOSED" -> "Closure Information"
+                                            "PARTIAL" -> "Partial Opening Details"
+                                            else -> "Status Information"
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = comment,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        }
                         InfoRow(
                             icon = Icons.Default.Info,
                             label = "Border Type",
@@ -194,6 +254,12 @@ fun DetailContent(
                             icon = Icons.Default.Info,
                             label = "Crossing Type",
                             value = borderPoint.crossingType ?: "Not specified"
+                        )
+                        InfoRow(
+                            icon = Icons.Default.AccessTime,
+                            label = "Last Updated",
+                            value = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                .format(Date(borderPoint.lastUpdate))
                         )
                         if (borderPoint.description.isNotBlank()) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -207,12 +273,6 @@ fun DetailContent(
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
-                        InfoRow(
-                            icon = Icons.Default.AccessTime,
-                            label = "Last Updated",
-                            value = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                                .format(Date(borderPoint.lastUpdate))
-                        )
                     }
                 }
 

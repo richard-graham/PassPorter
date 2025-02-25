@@ -76,7 +76,9 @@ class AddBorderPointViewModel @Inject constructor(
                                 description = borderPoint.description,
                                 borderType = borderPoint.borderType,
                                 crossingType = borderPoint.crossingType,
-                                operatingAuthority = borderPoint.operatingAuthority
+                                operatingAuthority = borderPoint.operatingAuthority,
+                                status = borderPoint.status.name,
+                                statusComment = borderPoint.statusComment ?: ""
                             ),
                             operatingHours = borderPoint.operatingHours ?: OperatingHours("", ""),
                             accessibility = borderPoint.accessibility,
@@ -159,7 +161,9 @@ class AddBorderPointViewModel @Inject constructor(
                 longitude = currentState.longitude,
                 countryA = currentState.basicInfo.countryA,
                 countryB = currentState.basicInfo.countryB,
-                status = BorderStatus.OPEN,
+                status = BorderStatus.valueOf(currentState.basicInfo.status),
+                statusComment = if (currentState.basicInfo.status != "OPEN")
+                    currentState.basicInfo.statusComment.ifBlank { null } else null,
                 lastUpdate = System.currentTimeMillis(),
                 createdBy = "user", // Should come from auth system
                 description = currentState.basicInfo.description,

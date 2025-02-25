@@ -14,6 +14,7 @@ data class BorderPointEntity(
     val countryA: String,
     val countryB: String,
     val status: String,
+    val statusComment: String?,
     val lastUpdate: Long,
     val createdBy: String,
     val description: String,

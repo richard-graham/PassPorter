@@ -26,7 +26,7 @@ sealed class AddBorderPointState {
     ) : AddBorderPointState() {
         fun isValid(): Boolean = with(basicInfo) {
             name.isNotBlank() && countryA.isNotBlank() && countryB.isNotBlank() &&
-                    latitude != 0.0 && longitude != 0.0
+                    latitude != 0.0 && longitude != 0.0 && status.isNotBlank()
         }
     }
 }
@@ -36,6 +36,9 @@ data class BasicBorderInfo(
     val nameEnglish: String? = null,
     val countryA: String = "",
     val countryB: String = "",
+    val status: String = "OPEN",
+    val statusComment: String = "",
+    val restrictionDetails: String = "",
     val description: String = "",
     val borderType: String? = null,
     val crossingType: String? = null,

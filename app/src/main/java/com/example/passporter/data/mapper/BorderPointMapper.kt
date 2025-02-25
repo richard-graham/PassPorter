@@ -39,14 +39,77 @@ class BorderPointMapper @Inject constructor() {
         BorderPointDto(
             id = domain.id,
             name = domain.name,
+            nameEnglish = domain.nameEnglish,
             latitude = domain.latitude,
             longitude = domain.longitude,
             countryA = domain.countryA,
             countryB = domain.countryB,
             status = domain.status.name,
+            statusComment = domain.statusComment,
             lastUpdate = domain.lastUpdate,
             createdBy = domain.createdBy,
-            description = domain.description
+            description = domain.description,
+            borderType = domain.borderType,
+            crossingType = domain.crossingType,
+            sourceId = domain.sourceId,
+            dataSource = domain.dataSource,
+            operatingHours = domain.operatingHours?.let {
+                com.example.passporter.data.remote.model.OperatingHours(
+                    regular = it.regular
+                )
+            },
+            operatingAuthority = domain.operatingAuthority,
+            accessibility = domain.accessibility.let { access ->
+                com.example.passporter.data.remote.model.Accessibility(
+                    trafficTypes = com.example.passporter.data.remote.model.TrafficTypes(
+                        pedestrian = access.trafficTypes.pedestrian ?: false,
+                        bicycle = access.trafficTypes.bicycle ?: false,
+                        motorcycle = access.trafficTypes.motorcycle ?: false,
+                        car = access.trafficTypes.car ?: false,
+                        rv = access.trafficTypes.rv ?: false,
+                        truck = access.trafficTypes.truck ?: false,
+                        bus = access.trafficTypes.bus ?: false
+                    ),
+                    roadConditions = com.example.passporter.data.remote.model.RoadConditions(
+                        approaching = com.example.passporter.data.remote.model.RoadCondition(
+                            type = access.roadConditions.approaching.type ?: "unknown",
+                            condition = access.roadConditions.approaching.condition ?: "unknown"
+                        ),
+                        departing = com.example.passporter.data.remote.model.RoadCondition(
+                            type = access.roadConditions.departing.type ?: "unknown",
+                            condition = access.roadConditions.departing.condition ?: "unknown"
+                        )
+                    )
+                )
+            },
+            facilities = domain.facilities.let { fac ->
+                com.example.passporter.data.remote.model.Facilities(
+                    amenities = com.example.passporter.data.remote.model.Amenities(
+                        restrooms = fac.amenities.restrooms ?: false,
+                        food = fac.amenities.food ?: false,
+                        water = fac.amenities.water ?: false,
+                        shelter = fac.amenities.shelter ?: false,
+                        wifi = fac.amenities.wifi ?: false,
+                        parking = fac.amenities.parking ?: false
+                    ),
+                    services = com.example.passporter.data.remote.model.Services(
+                        currencyExchange = com.example.passporter.data.remote.model.CurrencyExchange(
+                            available = fac.services.currencyExchange.available ?: false
+                        ),
+                        dutyFree = fac.services.dutyFree ?: false,
+                        insurance = com.example.passporter.data.remote.model.InsuranceServices(
+                            available = fac.services.insurance.available ?: false,
+                            types = fac.services.insurance.types
+                        ),
+                        storage = fac.services.storage ?: false,
+                        telecommunications = com.example.passporter.data.remote.model.TelecomServices(
+                            available = fac.services.telecommunications.available ?: false,
+                            operators = fac.services.telecommunications.operators,
+                            hasSimCards = fac.services.telecommunications.hasSimCards ?: false
+                        )
+                    )
+                )
+            }
         )
 
     fun toDomain(dto: BorderPointDto): BorderPoint =
@@ -59,6 +122,7 @@ class BorderPointMapper @Inject constructor() {
             countryA = dto.countryA,
             countryB = dto.countryB,
             status = BorderStatus.valueOf(dto.status),
+            statusComment = dto.statusComment,
             lastUpdate = dto.lastUpdate,
             createdBy = dto.createdBy,
             description = dto.description,
@@ -131,6 +195,7 @@ class BorderPointMapper @Inject constructor() {
             countryA = domain.countryA,
             countryB = domain.countryB,
             status = domain.status.name,
+            statusComment = domain.statusComment,
             lastUpdate = domain.lastUpdate,
             createdBy = domain.createdBy,
             description = domain.description,
@@ -248,6 +313,7 @@ class BorderPointMapper @Inject constructor() {
             countryA = entity.countryA,
             countryB = entity.countryB,
             status = BorderStatus.valueOf(entity.status),
+            statusComment = entity.statusComment,
             lastUpdate = entity.lastUpdate,
             createdBy = entity.createdBy,
             description = entity.description,

@@ -11,6 +11,7 @@ data class BorderPoint(
     val countryA: String,
     val countryB: String,
     val status: BorderStatus,
+    val statusComment: String?,
     val lastUpdate: Long,
     val createdBy: String,
     val description: String,

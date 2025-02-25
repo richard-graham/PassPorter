@@ -11,6 +11,7 @@ data class BorderPointDto(
     val countryA: String = "",
     val countryB: String = "",
     val status: String = "",
+    val statusComment: String? = null,
     val lastUpdate: Long = 0L,
     val createdBy: String = "",
     val description: String = "",
