@@ -10,9 +10,10 @@ interface BorderRepository {
     fun syncBorderPoints(): Flow<List<BorderPoint>>
     fun getBorderPointsByCoordinates(bounds: LatLngBounds): Flow<List<BorderPoint>>
     suspend fun getBorderPointById(id: String): ResultUtil<BorderPoint>
-    suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit>
+    suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<String>
     fun getBorderUpdates(borderPointId: String): Flow<List<BorderUpdate>>
     suspend fun addBorderUpdate(update: BorderUpdate): ResultUtil<Unit>
     suspend fun subscribeToBorderPoint(userId: String, borderPointId: String): ResultUtil<Unit>
-    suspend fun updateBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit>
+    suspend fun updateBorderPoint(borderPoint: BorderPoint): ResultUtil<String>
+    suspend fun markBorderPointAsDeleted(id: String, userId: String): Result<Unit>
 }

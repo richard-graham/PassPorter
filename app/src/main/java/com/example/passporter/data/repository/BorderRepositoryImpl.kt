@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Date
 import javax.inject.Inject
 
 class BorderRepositoryImpl @Inject constructor(
@@ -58,6 +59,7 @@ class BorderRepositoryImpl @Inject constructor(
                 west = bounds.southwest.longitude,
                 east = bounds.northeast.longitude
             ).first()
+            borderPoints.filter { !it.deleted }
             if (borderPoints.isNotEmpty()) {
                 send(borderPoints.map(borderPointMapper::toDomain))
             }
@@ -69,10 +71,10 @@ class BorderRepositoryImpl @Inject constructor(
         withContext(dispatcherProvider.io) {
             try {
                 val borderPoint = borderDao.getBorderPointById(id).first()
-                if (borderPoint != null) {
+                if (borderPoint != null && !borderPoint.deleted) {
                     ResultUtil.Success(borderPointMapper.toDomain(borderPoint))
                 } else {
-                   ResultUtil.Error(Throwable("Border point not found"))
+                    ResultUtil.Error(Throwable("Border point not found or has been deleted"))
                 }
             } catch (e: Exception) {
                 ResultUtil.Error(e)
@@ -80,13 +82,13 @@ class BorderRepositoryImpl @Inject constructor(
         }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> =
+    override suspend fun addBorderPoint(borderPoint: BorderPoint): ResultUtil<String> =
         withContext(dispatcherProvider.io) {
             try {
                 val dto = borderPointMapper.toDto(borderPoint)
                 firestoreService.addBorderPoint(dto)
                 borderDao.insertBorderPoint(borderPointMapper.toEntity(borderPoint))
-                ResultUtil.Success(Unit)
+                ResultUtil.Success(borderPoint.id)  // Return the ID
             } catch (e: Exception) {
                 ResultUtil.Error(e)
             }
@@ -130,7 +132,7 @@ class BorderRepositoryImpl @Inject constructor(
         }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun updateBorderPoint(borderPoint: BorderPoint): ResultUtil<Unit> {
+    override suspend fun updateBorderPoint(borderPoint: BorderPoint): ResultUtil<String> {
         return try {
             // Update in Firestore
             firestoreService.updateBorderPoint(borderPointMapper.toDto(borderPoint))
@@ -138,9 +140,39 @@ class BorderRepositoryImpl @Inject constructor(
             // Update local cache
             borderDao.updateBorderPoint(borderPointMapper.toEntity(borderPoint))
 
-            ResultUtil.Success(Unit)
+            ResultUtil.Success(borderPoint.id)
         } catch (e: Exception) {
             ResultUtil.Error(e)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun markBorderPointAsDeleted(id: String, userId: String): Result<Unit> {
+        try {
+            // First, get the existing border point
+            val borderPointEntity = borderDao.getBorderPointById(id).first()
+                ?: return Result.failure(Exception("Border point not found"))
+            val existingBorderPoint = borderPointMapper.toDomain(borderPointEntity)
+
+            val now = System.currentTimeMillis()
+            val currentDate = Date(now)
+
+            // Create a DTO with the updated fields
+            val updatedDto = borderPointMapper.toDto(existingBorderPoint).copy(
+                deleted = true,
+                deletedAt = currentDate,
+                deletedBy = userId
+            )
+
+            // Update the full object in Firestore
+            firestoreService.updateBorderPoint(updatedDto)
+
+            // Update local database
+            borderDao.updateBorderPointDeletedStatus(id, true, now, userId)
+
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            return Result.failure(e)
         }
     }
 }

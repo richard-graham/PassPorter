@@ -13,6 +13,7 @@ sealed class AddBorderPointState {
     data object Loading : AddBorderPointState()
     data class Error(val message: String) : AddBorderPointState()
     data class Input(
+        val id: String? = null,
         val basicInfo: BasicBorderInfo = BasicBorderInfo(),
         val operatingHours: OperatingHours = OperatingHours(null),
         val accessibility: Accessibility = Accessibility(

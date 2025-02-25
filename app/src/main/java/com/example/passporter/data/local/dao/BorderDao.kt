@@ -14,11 +14,10 @@ interface BorderDao {
     @Query("SELECT * FROM border_points")
     fun getBorderPoints(): Flow<List<BorderPointEntity>>
 
-    @Query("""
-        SELECT * FROM border_points 
-        WHERE latitude BETWEEN :south AND :north
-        AND longitude BETWEEN :west AND :east
-    """)
+    @Query("SELECT * FROM border_points WHERE " +
+            "latitude BETWEEN :south AND :north AND " +
+            "longitude BETWEEN :west AND :east AND " +
+            "deleted = 0")
     fun getBorderPointsInBounds(
         south: Double,
         north: Double,
@@ -40,4 +39,12 @@ interface BorderDao {
 
     @Update
     suspend fun updateBorderPoint(borderPoint: BorderPointEntity)
+
+    @Query("UPDATE border_points SET deleted = :deleted, deletedAt = :deletedAtTimestamp, deletedBy = :deletedBy WHERE id = :id")
+    suspend fun updateBorderPointDeletedStatus(
+        id: String,
+        deleted: Boolean,
+        deletedAtTimestamp: Long,
+        deletedBy: String
+    )
 }

@@ -9,6 +9,7 @@ import com.example.passporter.domain.entity.BorderStatus
 import com.example.passporter.domain.entity.Facilities
 import com.example.passporter.domain.entity.OperatingHours
 import com.example.passporter.domain.usecase.border.AddBorderPointUseCase
+import com.example.passporter.domain.usecase.border.DeleteBorderPointUseCase
 import com.example.passporter.domain.usecase.border.GetBorderPointDetailsUseCase
 import com.example.passporter.domain.usecase.border.UpdateBorderPointUseCase
 import com.example.passporter.presentation.util.ResultUtil
@@ -26,6 +27,7 @@ class AddBorderPointViewModel @Inject constructor(
     private val updateBorderPointUseCase: UpdateBorderPointUseCase,
     private val getBorderPointDetailsUseCase: GetBorderPointDetailsUseCase,
     private val addBorderPointUseCase: AddBorderPointUseCase,
+    private val deleteBorderPointUseCase: DeleteBorderPointUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -53,7 +55,6 @@ class AddBorderPointViewModel @Inject constructor(
                 } else current
             }
         }
-        // Otherwise, let the user set the location in the UI
     }
 
     private fun loadExistingBorderPoint() {
@@ -68,6 +69,7 @@ class AddBorderPointViewModel @Inject constructor(
                         longitude = borderPoint.longitude
 
                         _state.value = AddBorderPointState.Input(
+                            id = id,
                             basicInfo = BasicBorderInfo(
                                 name = borderPoint.name,
                                 nameEnglish = borderPoint.nameEnglish,
@@ -185,12 +187,43 @@ class AddBorderPointViewModel @Inject constructor(
 
             when (result) {
                 is ResultUtil.Success<*> -> {
-                    _state.value = AddBorderPointState.Input(additionComplete = true)
+                    _state.value = AddBorderPointState.Input(
+                        additionComplete = true,
+                        id = borderPoint.id,
+                        basicInfo = currentState.basicInfo,
+                        operatingHours = currentState.operatingHours,
+                        accessibility = currentState.accessibility,
+                        facilities = currentState.facilities,
+                        latitude = currentState.latitude,
+                        longitude = currentState.longitude,
+                    )
                 }
 
                 is ResultUtil.Error -> {
                     _state.value = AddBorderPointState.Error(
                         result.exception.message ?: "Unknown error occurred"
+                    )
+                }
+            }
+        }
+    }
+
+    fun deleteBorderPoint() {
+        viewModelScope.launch {
+            val inputState = (state.value as? AddBorderPointState.Input) ?: return@launch
+            val id = inputState.id ?: return@launch
+
+            _state.value = AddBorderPointState.Loading
+
+            val result = deleteBorderPointUseCase(id)
+
+            when (result) {
+                is ResultUtil.Success -> {
+                    _state.value = AddBorderPointState.Input(additionComplete = true)
+                }
+                is ResultUtil.Error -> {
+                    _state.value = AddBorderPointState.Error(
+                        result.exception.message ?: "Failed to delete border point"
                     )
                 }
             }

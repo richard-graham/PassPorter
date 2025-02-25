@@ -22,6 +22,7 @@ class FirestoreService @Inject constructor() {
 
     fun getBorderPoints(): Flow<List<BorderPointDto>> = callbackFlow {
         val subscription = borderPointsCollection
+//            .whereEqualTo("deleted", false)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)

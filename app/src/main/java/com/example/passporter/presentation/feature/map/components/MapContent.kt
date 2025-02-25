@@ -139,7 +139,7 @@ fun MapContent(
             FloatingActionButton(
                 onClick = { onNavigateToAdd(location) },
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.BottomStart)
                     .padding(16.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Border Point")

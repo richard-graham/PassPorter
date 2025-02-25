@@ -28,7 +28,10 @@ data class BorderPointEntity(
     @Embedded(prefix = "accessibility_")
     val accessibility: AccessibilityEntity,
     @Embedded(prefix = "facilities_")
-    val facilities: FacilitiesEntity
+    val facilities: FacilitiesEntity,
+    val deleted: Boolean = false,
+    val deletedAt: Long? = null,
+    val deletedBy: String? = null
 )
 
 // Existing entity classes remain unchanged

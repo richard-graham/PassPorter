@@ -112,7 +112,15 @@ fun NavGraph(
 
             AddBorderPointScreen(
                 initialSection = initialSection,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onDeleteSuccess = {
+                    navController.navigate(Screen.Map.route) {
+                        // Pop up to the map screen, removing all screens in between
+                        popUpTo(Screen.Map.route) {
+                            inclusive = false
+                        }
+                    }
+                }
             )
         }
     }

@@ -33,6 +33,7 @@ import com.example.passporter.domain.entity.Services
 import com.example.passporter.domain.entity.TelecomServices
 import com.example.passporter.domain.entity.TrafficTypes
 import java.time.LocalDate
+import java.util.Date
 import javax.inject.Inject
 
 class BorderPointMapper @Inject constructor() {
@@ -55,6 +56,9 @@ class BorderPointMapper @Inject constructor() {
             crossingType = domain.crossingType,
             sourceId = domain.sourceId,
             dataSource = domain.dataSource,
+            deleted = domain.deleted,
+            deletedAt = domain.deletedAt,
+            deletedBy = domain.deletedBy,
             operatingHours = domain.operatingHours?.let {
                 com.example.passporter.data.remote.model.OperatingHours(
                     regular = it.regular,
@@ -156,6 +160,9 @@ class BorderPointMapper @Inject constructor() {
             crossingType = dto.crossingType,
             sourceId = dto.sourceId,
             dataSource = dto.dataSource,
+            deleted = dto.deleted,
+            deletedAt = dto.deletedAt,
+            deletedBy = dto.deletedBy,
             operatingHours = dto.operatingHours?.let { hours ->
                 OperatingHours(
                     regular = hours.regular,
@@ -254,6 +261,9 @@ class BorderPointMapper @Inject constructor() {
             crossingType = domain.crossingType,
             sourceId = domain.sourceId,
             dataSource = domain.dataSource,
+            deleted = domain.deleted,
+            deletedAt = domain.deletedAt?.time,
+            deletedBy = domain.deletedBy,
             operatingHours = domain.operatingHours?.let { hours ->
                 OperatingHoursEntity(
                     regular = hours.regular,
@@ -372,6 +382,9 @@ class BorderPointMapper @Inject constructor() {
             crossingType = entity.crossingType,
             sourceId = entity.sourceId,
             dataSource = entity.dataSource,
+            deleted = entity.deleted,
+            deletedAt = entity.deletedAt?.let { Date(it) },
+            deletedBy = entity.deletedBy,
             operatingHours = entity.operatingHours?.let { hours ->
                 OperatingHours(
                     regular = hours.regular,

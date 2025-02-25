@@ -1,6 +1,7 @@
 package com.example.passporter.domain.entity
 
 import java.time.LocalDate
+import java.util.Date
 
 data class BorderPoint(
     val id: String,
@@ -22,7 +23,10 @@ data class BorderPoint(
     val operatingHours: OperatingHours?,
     val operatingAuthority: String?,
     val accessibility: Accessibility,
-    val facilities: Facilities
+    val facilities: Facilities,
+    val deleted: Boolean = false,
+    val deletedAt: Date? = null,
+    val deletedBy: String? = null
 )
 
 data class OperatingHours(

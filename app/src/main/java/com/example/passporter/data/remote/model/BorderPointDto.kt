@@ -1,6 +1,7 @@
 package com.example.passporter.data.remote.model
 
 import androidx.annotation.Keep
+import java.util.Date
 
 data class BorderPointDto(
     val id: String = "",
@@ -23,6 +24,9 @@ data class BorderPointDto(
     val operatingAuthority: String? = null,
     val accessibility: Accessibility? = null,
     val facilities: Facilities? = null,
+    val deleted: Boolean = false,
+    val deletedAt: Date? = null,
+    val deletedBy: String? = null
 )
 
 @Keep

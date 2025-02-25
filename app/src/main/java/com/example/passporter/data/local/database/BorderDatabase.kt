@@ -1,7 +1,6 @@
 package com.example.passporter.data.local.database
 
 import android.content.Context
-import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -18,7 +17,7 @@ import com.google.gson.reflect.TypeToken
 
 @Database(
     entities = [BorderPointEntity::class, BorderUpdateEntity::class],
-    version = 4
+    version = 5
 )
 @TypeConverters(Converters::class)
 abstract class BorderDatabase : RoomDatabase() {
@@ -28,9 +27,9 @@ abstract class BorderDatabase : RoomDatabase() {
         // Add migration here
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                Log.d("Migration", "Starting migration from 1 to 2")
                 // Create temporary table with new schema
-                db.execSQL("""
+                db.execSQL(
+                    """
                     CREATE TABLE border_points_new (
                         id TEXT NOT NULL PRIMARY KEY,
                         name TEXT NOT NULL,
@@ -83,10 +82,12 @@ abstract class BorderDatabase : RoomDatabase() {
                         facilities_services_telecom_operators TEXT,
                         facilities_services_telecom_hasSimCards INTEGER
                     )
-                """)
+                """
+                )
 
                 // Copy data from old table
-                db.execSQL("""
+                db.execSQL(
+                    """
                     INSERT INTO border_points_new (
                         id, name, nameEnglish, latitude, longitude, countryA, countryB,
                         status, lastUpdate, createdBy, description, borderType, crossingType,
@@ -107,53 +108,57 @@ abstract class BorderDatabase : RoomDatabase() {
                     )
                     SELECT *
                     FROM border_points
-                """)
+                """
+                )
 
                 // Drop old table and rename new one
                 db.execSQL("DROP TABLE border_points")
                 db.execSQL("ALTER TABLE border_points_new RENAME TO border_points")
-
-                Log.d("Migration", "Completed migration from 1 to 2")
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                Log.d("Migration", "Starting migration from 2 to 3")
-
                 // Add the new restrictionDetails column
                 db.execSQL("ALTER TABLE border_points ADD COLUMN restrictionDetails TEXT")
 
                 // Update existing RESTRICTED status borders with null for restrictionDetails
-                db.execSQL("""
+                db.execSQL(
+                    """
                     UPDATE border_points
                     SET restrictionDetails = NULL
                     WHERE status = 'RESTRICTED'
-                """)
-
-                Log.d("Migration", "Completed migration from 2 to 3")
+                """
+                )
             }
         }
 
         // New migration from version 3 to 4 to replace restrictionDetails with statusComment
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                Log.d("Migration", "Starting migration from 3 to 4")
-
                 // Step 1: Add the new statusComment column
                 db.execSQL("ALTER TABLE border_points ADD COLUMN statusComment TEXT")
 
                 // Step 2: Copy data from restrictionDetails to statusComment for RESTRICTED status
-                db.execSQL("""
+                db.execSQL(
+                    """
             UPDATE border_points
             SET statusComment = restrictionDetails
             WHERE status = 'RESTRICTED' AND restrictionDetails IS NOT NULL
-        """)
+        """
+                )
 
                 // Note: We cannot remove columns in SQLite directly,
                 // so restrictionDetails will remain but won't be used by the app
+            }
+        }
 
-                Log.d("Migration", "Completed migration from 3 to 4")
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add the deleted fields
+                db.execSQL("ALTER TABLE border_points ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE border_points ADD COLUMN deletedAt INTEGER DEFAULT NULL")
+                db.execSQL("ALTER TABLE border_points ADD COLUMN deletedBy TEXT DEFAULT NULL")
             }
         }
 
@@ -163,7 +168,7 @@ abstract class BorderDatabase : RoomDatabase() {
                 BorderDatabase::class.java,
                 "border_database"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)  // Add migration to builder
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
         }
     }
